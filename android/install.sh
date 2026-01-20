@@ -38,12 +38,85 @@ echo -e "${HIJAU}[3/6] Setup Password SSH...${NC}"
 echo -e "${MERAH}⚠️  Masukkan Password untuk login Terminal (ingat baik-baik!):${NC}"
 passwd
 
-# 4. DOWNLOAD noVNC
+# 4. DOWNLOAD noVNC + LANDING PAGE
 echo -e "${HIJAU}[4/6] Menyiapkan noVNC...${NC}"
 if [ ! -d "noVNC" ]; then
     git clone --depth 1 https://github.com/novnc/noVNC.git
 else
     echo "Folder noVNC sudah ada, skip download."
+fi
+
+# Input branding untuk halaman depan noVNC (ganti Directory Listing)
+echo -e "${HIJAU}[4A] Masukkan nama web untuk halaman depan...${NC}"
+read -p "Nama Web (contoh: Raja's Server Lab) > " WEB_TITLE
+read -p "Nama Pemilik/Lab (contoh: Raja Zhafif) > " WEB_OWNER
+
+WEB_TITLE=${WEB_TITLE:-"Raja's Server Lab"}
+WEB_OWNER=${WEB_OWNER:-"Raja Zhafif"}
+
+# Generate index.html sesuai template yang diminta
+if [ -d "noVNC" ]; then
+cat <<EOF > noVNC/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${WEB_TITLE}</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            border: 1px solid #30363d;
+            padding: 40px;
+            border-radius: 10px;
+            background: #161b22;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+        h1 { color: #58a6ff; margin-bottom: 10px; }
+        p { color: #8b949e; margin-bottom: 30px; }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            text-decoration: none;
+            color: #ffffff;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-full { background-color: #238636; border: 1px solid #238636; }
+        .btn-full:hover { background-color: #2ea043; }
+        .btn-lite { background-color: transparent; border: 1px solid #30363d; color: #c9d1d9; }
+        .btn-lite:hover { border-color: #8b949e; }
+        .footer { margin-top: 20px; font-size: 12px; color: #484f58; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ACCESS GRANTED</h1>
+        <p>Welcome to <strong>${WEB_OWNER}'s</strong> Private Cloud Lab.</p>
+        
+        <a href="vnc.html" class="btn btn-full">🚀 FULL CONTROL (GUI)</a>
+        <a href="vnc_lite.html" class="btn btn-lite">⚡ LITE MODE</a>
+
+        <div class="footer">
+            System Status: ONLINE | Encrypted via Cloudflare
+        </div>
+    </div>
+</body>
+</html>
+EOF
 fi
 
 # 5. BUAT CONFIG NGINX OTOMATIS

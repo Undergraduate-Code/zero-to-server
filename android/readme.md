@@ -97,10 +97,17 @@ Script ini akan secara otomatis:
 
 1. **Membersihkan** sisa proses lama (Nginx, Cloudflared, dll).
 2. **Menginstall** paket: `nginx`, `openssh`, `cloudflared`, `tur-repo`.
-3. **Mengunduh noVNC** untuk antarmuka web.
+3. **Mengunduh noVNC** untuk antarmuka web dan membuat landing page custom (ganti Directory Listing) sesuai nama web/owner yang kamu input.
 4. **Setup SSH Password** untuk akses terminal.
 5. **Konfigurasi Nginx** otomatis (proxy ke noVNC).
 6. **Input Token Cloudflare** dan pembuatan script `server.sh`.
+
+### Input yang akan diminta saat instalasi
+
+- **Password SSH**: untuk login terminal.
+- **Nama Web**: judul halaman depan noVNC (contoh: `Raja's Server Lab`).
+- **Nama Pemilik/Lab**: teks pada intro (contoh: `Raja Zhafif`).
+- **Token Cloudflare**: kode tunnel `eyJhIjoi...`.
 
 ### 3. Update Sistem & Cloudflared
 
