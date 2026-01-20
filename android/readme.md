@@ -3,16 +3,19 @@
 Project ini mengubah HP Android (dites pada **Vivo V2027 / Funtouch OS**) menjadi server Linux production-ready yang bisa diakses dari internet tanpa IP Public (menggunakan Cloudflare Tunnel).
 
 **Fitur Utama:**
-* **GUI Access:** Akses layar HP via Browser (noVNC) -> `display.domain.com`
-* **Terminal Access:** Akses SSH via VS Code/CMD (Native SSH) -> `server.domain.com`
-* **Auto-Setup:** Script instalasi otomatis (Nginx, SSH, Cloudflared).
+
+- **GUI Access:** Akses layar HP via Browser (noVNC) -> `display.domain.com`
+- **Terminal Access:** Akses SSH via VS Code/CMD (Native SSH) -> `server.domain.com`
+- **Auto-Setup:** Script instalasi otomatis (Nginx, SSH, Cloudflared).
 
 <br>
 
 ## 🛠️ Tahap 1: Persiapan Android (Wajib!)
+
 HP Vivo/Funtouch OS memiliki manajemen baterai yang agresif. Lakukan konfigurasi ini agar server tidak mati sendiri (Kill Process).
 
 ### 1. Developer Options (Opsi Pengembang)
+
 1.  Masuk **Settings > System Management > About Phone**.
 2.  Ketuk **Software Version** 7x sampai muncul "You are a developer".
 3.  Kembali, masuk ke **Developer Options**.
@@ -20,27 +23,31 @@ HP Vivo/Funtouch OS memiliki manajemen baterai yang agresif. Lakukan konfigurasi
 5.  Set ke **Standard limit** (JANGAN "No background process").
 
 ### 2. Kunci Aplikasi (Lock Recent Apps)
+
 1.  Buka aplikasi **Termux** dan **droidVNC-NG**.
 2.  Buka **Recent Apps** (Geser bawah ke tengah).
 3.  Tarik ikon aplikasi ke bawah / klik menu, pilih **Lock Down** (ikon Gembok).
-4.  *Tujuan: Agar saat "Clear RAM", server tidak ikut tertutup.*
+4.  _Tujuan: Agar saat "Clear RAM", server tidak ikut tertutup._
 
 ### 3. Izin Baterai & Autostart
+
 1.  **Settings > Battery > Background power consumption management**.
-    * Set Termux & droidVNC-NG ke **High background power usage**.
+    - Set Termux & droidVNC-NG ke **High background power usage**.
 2.  **Settings > Applications and Permissions > Permission management > Autostart**.
-    * Aktifkan (ON) untuk Termux & droidVNC-NG.
+    - Aktifkan (ON) untuk Termux & droidVNC-NG.
 
 ### 4. Setup droidVNC-NG (Untuk GUI)
+
 1.  Download aplikasi **droidVNC-NG** di PlayStore.
 2.  Buka App, berikan izin **Accessibility** & **Screen Recording**.
-    * *Tips Vivo:* Jika aksesibilitas sering mati sendiri, matikan lalu nyalakan lagi di pengaturan.
+    - _Tips Vivo:_ Jika aksesibilitas sering mati sendiri, matikan lalu nyalakan lagi di pengaturan.
 3.  Set Password VNC di dalam aplikasi.
 4.  Klik **Start**.
 
 <br>
 
 ## ☁️ Tahap 2: Setup Cloudflare Tunnel
+
 Kita menggunakan Cloudflare agar tidak perlu open port router.
 
 1.  Login ke **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
@@ -48,18 +55,21 @@ Kita menggunakan Cloudflare agar tidak perlu open port router.
 3.  Simpan **Token** (kode panjang dimulai dengan `eyJhIjoi...`).
 4.  Di tab **Public Hostname**, tambahkan 2 jalur:
 
-| Subdomain | Domain | Service Type | URL | Fungsi |
-| :--- | :--- | :--- | :--- | :--- |
-| `display` | `domainmu.com` | **HTTP** | `localhost:8080` | Akses Layar HP (Web) |
-| `server` | `domainmu.com` | **SSH** | `localhost:8022` | Akses Terminal (SSH) |
+| Subdomain | Domain         | Service Type | URL              | Fungsi               |
+| :-------- | :------------- | :----------- | :--------------- | :------------------- |
+| `display` | `domainmu.com` | **HTTP**     | `localhost:8080` | Akses Layar HP (Web) |
+| `server`  | `domainmu.com` | **SSH**      | `localhost:8022` | Akses Terminal (SSH) |
 
 <br>
 
 ## 🚀 Tahap 3: Instalasi di Termux
+
 Sekarang kita setup "otak" servernya menggunakan script otomatis.
 
 ### 1. Install Git (Awal Saja)
+
 Buka Termux (kosongan), ketik:
+
 ```bash
 pkg update -y
 pkg install git -y
@@ -122,7 +132,7 @@ ssh vivo
 
 ```
 
-*(Masukkan password yang kamu buat saat instalasi)*.
+_(Masukkan password yang kamu buat saat instalasi)_.
 
 <br>
 
@@ -130,18 +140,36 @@ ssh vivo
 
 ### Struktur `nginx.conf`
 
-Kita menggunakan Nginx sebagai "Satpam" (Reverse Proxy) yang meneruskan trafik dari Cloudflare (8080) ke noVNC (6080).
+Kita menggunakan Nginx sebagai "Satpam" (Reverse Proxy) yang meneruskan trafik dari Cloudflare (8080) ke noVNC (6080), dengan fitur keamanan.
 
 ```nginx
 server {
     listen 8080; # Pintu Masuk dari Cloudflare
+
+    # 1. Proxy ke noVNC (Port 6080)
     location / {
-        proxy_pass [http://127.0.0.1:6080/](http://127.0.0.1:6080/); # Diteruskan ke noVNC
+        proxy_pass http://127.0.0.1:6080/; # Diteruskan ke noVNC
         # ... (Header settings untuk WebSocket)
+    }
+
+    # 2. SECURITY: Blokir akses ke file/folder sensitif (titik di depan)
+    # Ini akan memblokir .git, .github, .gitignore, dll.
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    # 3. SECURITY: Blokir file dokumen project yang gak perlu dilihat umum
+    location ~ /(README.md|AUTHORS|LICENSE|package.json|mandatory.json) {
+        deny all;
     }
 }
 
 ```
+
+**Penjelasan Security Rules:**
+
+- **Rule 2:** Blokir akses ke semua file/folder yang diawali dengan titik (`.`), seperti `.git`, `.github`, `.gitignore`. Exception: `.well-known` (untuk SSL verification).
+- **Rule 3:** Blokir akses ke file dokumentasi sensitif yang tidak perlu dilihat publik.
 
 ### Script Utama `server.sh`
 
@@ -149,13 +177,13 @@ Script ini dijalankan setiap kali server mau dinyalakan (`./server.sh`).
 
 ```bash
 # Mencegah HP tidur (Deep Sleep)
-termux-wake-lock 
+termux-wake-lock
 
 # Menyalakan SSH Server (Port 8022)
-sshd 
+sshd
 
 # Menyalakan noVNC (Background process)
-nohup ./noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6080 & 
+nohup ./noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
 
 # Menyalakan Nginx & Cloudflare Tunnel
 nginx
@@ -167,6 +195,6 @@ nohup cloudflared tunnel run --token $TOKEN &
 
 ## ⚠️ Troubleshooting
 
-* **Layar Web VNC Macet/Hitam:** Cek izin aksesibilitas `droidVNC-NG` di pengaturan HP, matikan lalu nyalakan lagi.
-* **SSH Connection Refused:** Pastikan konfigurasi Public Hostname di Cloudflare mengarah ke `localhost:8022` dengan tipe service **SSH**.
-* **Server Mati Sendiri:** Pastikan sudah melakukan "Lock Recent Apps" dan setting baterai "High Usage".
+- **Layar Web VNC Macet/Hitam:** Cek izin aksesibilitas `droidVNC-NG` di pengaturan HP, matikan lalu nyalakan lagi.
+- **SSH Connection Refused:** Pastikan konfigurasi Public Hostname di Cloudflare mengarah ke `localhost:8022` dengan tipe service **SSH**.
+- **Server Mati Sendiri:** Pastikan sudah melakukan "Lock Recent Apps" dan setting baterai "High Usage".

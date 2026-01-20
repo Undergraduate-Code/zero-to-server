@@ -61,14 +61,25 @@ http {
     server {
         listen 8080;
         server_name localhost;
-        
-        # Proxy ke noVNC (Port 6080)
+
+        # 1. Ini Konfigurasi Utama (Proxy ke noVNC)
         location / {
             proxy_pass http://127.0.0.1:6080/;
             proxy_http_version 1.1;
             proxy_set_header Upgrade \$http_upgrade;
             proxy_set_header Connection "Upgrade";
             proxy_set_header Host \$host;
+        }
+
+        # 2. SECURITY: Blokir akses ke file/folder sensitif (titik di depan)
+        # Ini akan memblokir .git, .github, .gitignore, dll.
+        location ~ /\.(?!well-known) {
+            deny all;
+        }
+
+        # 3. SECURITY: Blokir file dokumen project yang gak perlu dilihat umum
+        location ~ /(README.md|AUTHORS|LICENSE|package.json|mandatory.json) {
+            deny all;
         }
     }
 }
