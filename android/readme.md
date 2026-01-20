@@ -81,12 +81,13 @@ pkg install git -y
 Download repository ini dan jalankan installernya:
 
 ```bash
-# Ganti URL di bawah dengan link repo GitHub kamu nanti
-git clone [https://github.com/username-kamu/nama-repo.git](https://github.com/username-kamu/nama-repo.git)
-cd nama-repo
+# Clone repo
+git clone https://github.com/brotherzhafif/zero-to-server.git
+cd zero-to-server/android
 
 # Jalankan installer
-bash install.sh
+chmod 777 install.sh
+./install.sh
 
 ```
 
