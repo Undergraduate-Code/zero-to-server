@@ -74,11 +74,11 @@ Secara umum, beginilah cara server kamu bekerja di semua platform:
 
 ```mermaid
 graph LR
-    User[User di Internet] -- HTTPS/SSH --> CF[Cloudflare Edge]
-    CF -- Tunnel (Encrypted) --> LocalDevice[Device Kamu (Android/PC)]
-    LocalDevice --> Nginx[Nginx Proxy]
-    Nginx -- Port 8080 --> VNC[Visual GUI (Layar)]
-    Nginx -- Port 22/8022 --> SSH[Terminal SSH]
+    User["User di Internet"] -- "HTTPS/SSH" --> CF["Cloudflare Edge"]
+    CF -- "Tunnel (Encrypted)" --> LocalDevice["Device Kamu (Android/PC)"]
+    LocalDevice --> Nginx["Nginx Proxy"]
+    Nginx -- "Port 8080" --> VNC["Visual GUI (Layar)"]
+    Nginx -- "Port 22/8022" --> SSH["Terminal SSH"]
 
 ```
 
