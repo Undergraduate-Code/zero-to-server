@@ -44,7 +44,7 @@ Mengubah HP Android menjadi Linux Server mini yang powerful. Sangat hemat daya (
 * **Features:** Akses layar HP via Browser (noVNC), Full Terminal SSH via VS Code, Auto-Install Script.
 * **Cocok untuk:** Hosting bot WA/Discord, Web Server ringan, Belajar Linux.
 
-👉 **[Buka Panduan Android Setup](./android/README.md)**
+👉 **[Buka Panduan Android Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/android)**
 
 ### 2. 🪟 Windows Server
 > **Status:** 🚧 **In Development (Coming Soon)**
