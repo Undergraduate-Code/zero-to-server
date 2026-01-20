@@ -98,8 +98,31 @@ Script ini akan secara otomatis:
 1. **Membersihkan** sisa proses lama (Nginx, Cloudflared, dll).
 2. **Menginstall** paket: `nginx`, `openssh`, `cloudflared`, `tur-repo`.
 3. **Mengunduh noVNC** untuk antarmuka web.
-4. **Membuat Config Nginx** reverse proxy (Port 8080 -> 6080).
-5. **Meminta Token & Password** dari user.
+4. **Setup SSH Password** untuk akses terminal.
+5. **Konfigurasi Nginx** otomatis (proxy ke noVNC).
+6. **Input Token Cloudflare** dan pembuatan script `server.sh`.
+
+### 3. Update Sistem & Cloudflared
+
+Setelah server berjalan beberapa waktu, Anda mungkin perlu melakukan update. Gunakan script `update.sh`:
+
+```bash
+chmod 777 update.sh
+./update.sh
+
+```
+
+### Apa yang dilakukan `update.sh`?
+
+Script ini akan:
+
+1. **Matikan server** sementara (Cloudflared, Nginx, SSH).
+2. **Update sistem** Termux (`pkg update` & `pkg upgrade`).
+3. **Update Cloudflared** ke versi terbaru (jika dipasang via `pkg`).
+4. **Tampilkan versi** Cloudflared yang aktif.
+5. **Memberikan pesan** untuk memulai kembali server dengan `./server.sh`.
+6. **Membuat Config Nginx** reverse proxy (Port 8080 -> 6080).
+7. **Meminta Token & Password** dari user.
 
 <br>
 
