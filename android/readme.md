@@ -54,12 +54,13 @@ Kita menggunakan Cloudflare agar tidak perlu open port router.
 1.  Login ke **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
 2.  Create Tunnel -> Pilih **Cloudflared**.
 3.  Simpan **Token** (kode panjang dimulai dengan `eyJhIjoi...`).
-4.  Di tab **Public Hostname**, tambahkan 2 jalur:
+4.  Di tab **Public Hostname**, tambahkan 3 jalur:
 
 | Subdomain | Domain         | Service Type | URL              | Fungsi                      |
 | :-------- | :------------- | :----------- | :--------------- | :-------------------------- |
 | `display` | `domainmu.com` | **HTTP**     | `localhost:8080` | Akses Layar HP (Web)        |
 | `server`  | `domainmu.com` | **SSH**      | `localhost:2022` | Akses Terminal Ubuntu (SSH) |
+| `termux`  | `domainmu.com` | **SSH**      | `localhost:8020` | Akses Terminal Termux (SSH) |
 
 **PENTING:** Port SSH Ubuntu adalah **2022**, bukan 8022. Pastikan konfigurasi Cloudflare mengarah ke `localhost:2022`.
 
