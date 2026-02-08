@@ -5,20 +5,20 @@
 
 # Created : 20 January 2025
 
-# WARNA BIAR KEREN
-HIJAU='\033[0;32m'
-BIRU='\033[0;34m'
-MERAH='\033[0;31m'
-NC='\033[0m'
+# COLORS FOR STYLE
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
 clear
-echo -e "${BIRU}===============================================${NC}"
-echo -e "${BIRU}   AUTO-INSTALLER SERVER Android (ALL-IN-ONE)  ${NC}"
-echo -e "${BIRU}===============================================${NC}"
+echo -e "${BLUE}===============================================${NC}"
+echo -e "${BLUE}   AUTO-INSTALLER ANDROID SERVER (ALL-IN-ONE)  ${NC}"
+echo -e "${BLUE}===============================================${NC}"
 echo ""
 
-# 1. CLEAN UP LINGKUNGAN
-echo -e "${HIJAU}[1/7] Membersihkan sisa file & proses lama...${NC}"
+# 1. CLEAN UP ENVIRONMENT
+echo -e "${GREEN}[1/7] Cleaning up old files & processes...${NC}"
 termux-wake-lock
 pkill -9 cloudflared 2>/dev/null
 pkill -9 nginx 2>/dev/null
@@ -27,51 +27,51 @@ pkill -f "novnc_proxy" 2>/dev/null
 rm -f server.sh start.sh tunnel.log
 rm -rf $PREFIX/etc/nginx/nginx.conf
 
-# 2. INSTALL PACKAGE PENTING
-echo -e "${HIJAU}[2/7] Mengupdate & Install Package...${NC}"
+# 2. INSTALL IMPORTANT PACKAGES
+echo -e "${GREEN}[2/7] Updating & Installing Packages...${NC}"
 pkg update -y -o Dpkg::Options::="--force-confnew"
 pkg upgrade -y -o Dpkg::Options::="--force-confnew"
 pkg install git wget nginx openssh tur-repo proot-distro -y
 pkg install cloudflared -y
 
 # 3. SETUP UBUNTU (CORE VS CODE)
-echo -e "${HIJAU}[3/7] Menginstall Ubuntu (Proot)...${NC}"
+echo -e "${GREEN}[3/7] Installing Ubuntu (Proot)...${NC}"
 if proot-distro list | grep -q "ubuntu (installed)"; then
-    echo "Ubuntu sudah terinstall, skip download."
+    echo "Ubuntu is already installed, skipping download."
 else
     proot-distro install ubuntu
 fi
 
-echo -e "${HIJAU}[4/7] Konfigurasi Internal Ubuntu...${NC}"
-# Login ke Ubuntu & jalankan perintah setup otomatis
+echo -e "${GREEN}[4/7] Internal Ubuntu Configuration...${NC}"
+# Login to Ubuntu & run automated setup commands
 proot-distro login ubuntu -- bash -c '
     apt update -y
     apt install openssh-server git curl nano net-tools -y
 
-    # Setup Config SSH Ubuntu (Port 2022)
+    # Setup Ubuntu SSH Config (Port 2022)
     echo "Port 2022" >> /etc/ssh/sshd_config
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
     
-    # Buat folder project
+    # Create project folder
     mkdir -p /root/project
 '
 
-# Setup Password Ubuntu
+# Setup Ubuntu Password
 echo ""
-echo -e "${MERAH}⚠️  SET PASSWORD UBUNTU (Untuk Login VS Code) ⚠️${NC}"
+echo -e "${RED}⚠️  SET UBUNTU PASSWORD (For VS Code Login) ⚠️${NC}"
 proot-distro login ubuntu -- passwd
 
 # 4. DOWNLOAD noVNC + LANDING PAGE
-echo -e "${HIJAU}[5/7] Menyiapkan noVNC...${NC}"
+echo -e "${GREEN}[5/7] Preparing noVNC...${NC}"
 if [ ! -d "noVNC" ]; then
     git clone --depth 1 https://github.com/novnc/noVNC.git
 fi
 
 # Input branding (Custom)
-echo -e "${HIJAU}[INFO] Masukkan nama web untuk halaman depan...${NC}"
-read -p "Nama Web (contoh: Raja's Lab) > " WEB_TITLE
-read -p "Nama Pemilik (contoh: Raja Zhafif) > " WEB_OWNER
+echo -e "${GREEN}[INFO] Enter web name for the front page...${NC}"
+read -p "Web Name (e.g., Raja's Lab) > " WEB_TITLE
+read -p "Owner Name (e.g., Raja Zhafif) > " WEB_OWNER
 
 WEB_TITLE=${WEB_TITLE:-"Raja's Server Lab"}
 WEB_OWNER=${WEB_OWNER:-"Raja Zhafif"}
@@ -105,8 +105,8 @@ cat <<EOF > noVNC/index.html
 EOF
 fi
 
-# 5. BUAT CONFIG NGINX OTOMATIS
-echo -e "${HIJAU}[6/7] Membuat Konfigurasi Nginx...${NC}"
+# 5. CREATE AUTOMATIC NGINX CONFIG
+echo -e "${GREEN}[6/7] Creating Nginx Configuration...${NC}"
 mkdir -p $PREFIX/etc/nginx
 cat <<EOF > $PREFIX/etc/nginx/nginx.conf
 worker_processes 1;
@@ -132,71 +132,71 @@ http {
 }
 EOF
 
-# 6. INPUT TOKEN CLOUDFLARE
+# 6. INPUT CLOUDFLARE TOKEN
 echo ""
-echo -e "${BIRU}===============================================${NC}"
-echo -e "Silakan Paste Token Cloudflare Tunnel (eyJhIjoi...) :"
+echo -e "${BLUE}===============================================${NC}"
+echo -e "Please Paste Cloudflare Tunnel Token (eyJhIjoi...) :"
 read -p "Token > " INPUT_TOKEN
 
-# 7. BUAT SCRIPT SERVER.SH FINAL
-echo -e "${HIJAU}[7/7] Membuat Script server.sh (Fixed Version)...${NC}"
+# 7. CREATE FINAL SERVER.SH SCRIPT
+echo -e "${GREEN}[7/7] Creating server.sh Script (Fixed Version)...${NC}"
 cat <<EOF > server.sh
 #!/bin/bash
 
-# TOKEN AUTOMATIS
+# AUTOMATED TOKEN
 TOKEN="$INPUT_TOKEN"
 
-HIJAU='\033[0;32m'
-BIRU='\033[0;34m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "\${BIRU}=========================================\${NC}"
-echo -e "\${BIRU}        SERVER ANDROID - ONLINE          \${NC}"
-echo -e "\${BIRU}=========================================\${NC}"
+echo -e "\${BLUE}=========================================\${NC}"
+echo -e "\${BLUE}        ANDROID SERVER - ONLINE          \${NC}"
+echo -e "\${BLUE}=========================================\${NC}"
 
 termux-wake-lock
 
-# Bersihkan Proses
-echo -e "\${HIJAU}[+] Reset proses server...\${NC}"
+# Clean Processes
+echo -e "\${GREEN}[+] Resetting server processes...\${NC}"
 pkill -f "novnc_proxy"
 pkill -f "nginx"
 pkill -f "cloudflared"
 pkill -f "sshd"
 
-# 1. Nyalakan Ubuntu SSH (Port 2022) -> UTAMA BUAT VS CODE
-echo -e "\${HIJAU}[+] Menyalakan Ubuntu SSH (Port 2022)...\${NC}"
-# FIX: Buat folder run dulu biar SSH gak crash/bad handshake
+# 1. Start Ubuntu SSH (Port 2022) -> MAIN FOR VS CODE
+echo -e "\${GREEN}[+] Starting Ubuntu SSH (Port 2022)...\${NC}"
+# FIX: Create run folder first to prevent SSH crash/bad handshake
 proot-distro login ubuntu -- mkdir -p /run/sshd
-# Jalankan SSH
+# Run SSH
 nohup proot-distro login ubuntu -- /usr/sbin/sshd -D > /dev/null 2>&1 &
 
-# 2. Nyalakan Termux SSH (Port 8022) -> CADANGAN
-echo -e "\${HIJAU}[+] Menyalakan Termux SSH (Port 8022)...\${NC}"
+# 2. Start Termux SSH (Port 8022) -> BACKUP
+echo -e "\${GREEN}[+] Starting Termux SSH (Port 8022)...\${NC}"
 sshd
 
-# 3. Nyalakan noVNC & Nginx
-echo -e "\${HIJAU}[+] Menyalakan GUI & Web...\${NC}"
+# 3. Start noVNC & Nginx
+echo -e "\${GREEN}[+] Starting GUI & Web...\${NC}"
 if [ -d "noVNC" ]; then
     nohup ./noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6080 > /dev/null 2>&1 &
 fi
 nginx
 
-# 4. Konek Cloudflare
+# 4. Connect Cloudflare
 if [ -n "\$TOKEN" ]; then
-    echo -e "\${HIJAU}[+] Menghubungkan Cloudflare Tunnel...\${NC}"
+    echo -e "\${GREEN}[+] Connecting Cloudflare Tunnel...\${NC}"
     nohup cloudflared tunnel run --token \$TOKEN > tunnel.log 2>&1 &
     
-    echo -e "\${BIRU}✅ SERVER SIAP! Akses di:\${NC}"
-    echo -e "🖥️  Layar HP:   https://display.brotherzhafif.my.id"
+    echo -e "\${BLUE}✅ SERVER READY! Access at:\${NC}"
+    echo -e "🖥️  Phone Screen:   https://display.brotherzhafif.my.id"
     echo -e "📟 VS Code:    ssh server.brotherzhafif.my.id"
-    echo -e "    (User: root | Port Asli: 2022)"
+    echo -e "    (User: root | Original Port: 2022)"
 else
-    echo "❌ ERROR: Token Cloudflare Kosong! Edit file server.sh"
+    echo "❌ ERROR: Cloudflare Token Empty! Edit server.sh file"
 fi
 EOF
 
 chmod +x server.sh
 
 echo ""
-echo -e "${BIRU}✅ INSTALASI SELESAI! ${NC}"
-echo "Jalankan server dengan: ./server.sh"
+echo -e "${BLUE}✅ INSTALLATION COMPLETE! ${NC}"
+echo "Run server with: ./server.sh"

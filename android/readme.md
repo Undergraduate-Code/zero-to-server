@@ -1,78 +1,77 @@
 # 📱 Android to Cloud Server (Termux + Cloudflare)
 
-Project ini mengubah HP Android (dites pada **Vivo V2027 / Funtouch OS**) menjadi server Linux production-ready yang bisa diakses dari internet tanpa IP Public (menggunakan Cloudflare Tunnel).
+This project turns an Android Phone (tested on **Vivo V2027 / Funtouch OS**) into a production-ready Linux server accessible from the internet without a Public IP (using Cloudflare Tunnel).
 
-**Fitur Utama:**
+**Key Features:**
 
-- **GUI Access:** Akses layar HP via Browser (noVNC) -> `display.domain.com`
-- **Terminal Access:** Akses SSH via VS Code Remote SSH (Native SSH) -> `server.domain.com`
-- **Ubuntu Environment:** Environment Ubuntu lengkap di dalam Termux (Proot) untuk mendukung VS Code Remote SSH
-- **Auto-Setup:** Script instalasi otomatis (Ubuntu, Nginx, SSH, Cloudflared)
+- **GUI Access:** Screen access via Browser (noVNC) -> `display.yourdomain.com`
+- **Terminal Access:** SSH access via VS Code Remote SSH (Native SSH) -> `server.yourdomain.com`
+- **Ubuntu Environment:** Full Ubuntu environment inside Termux (Proot) to support VS Code Remote SSH.
+- **Auto-Setup:** Automated installation script (Ubuntu, Nginx, SSH, Cloudflared).
 
-<br>
+## 🛠️ Phase 1: Android Preparation (Mandatory!)
 
-## 🛠️ Tahap 1: Persiapan Android (Wajib!)
+Android phones have aggressive battery management. Configure these settings so the server doesn't turn off by itself (Process Killing).
 
-HP Android memiliki manajemen baterai yang agresif. Lakukan konfigurasi ini agar server tidak mati sendiri (Kill Process).
+### 1. Developer Options
 
-### 1. Developer Options (Opsi Pengembang)
+1. Go to **Settings > System Management > About Phone**.
+2. Tap **Software Version** 7x until "You are a developer" appears.
+3. Go back, enter **Developer Options**.
+4. Scroll to the bottom (Apps), find **Background process limit**.
+5. Set to **Standard limit** (DO NOT select "No background process").
 
-1.  Masuk **Settings > System Management > About Phone**.
-2.  Ketuk **Software Version** 7x sampai muncul "You are a developer".
-3.  Kembali, masuk ke **Developer Options**.
-4.  Scroll ke paling bawah (Apps), cari **Background process limit**.
-5.  Set ke **Standard limit** (JANGAN "No background process").
+### 2. Lock Recent Apps
 
-### 2. Kunci Aplikasi (Lock Recent Apps)
+1. Open the **Termux** and **droidVNC-NG** apps.
+2. Open **Recent Apps** (Swipe up to the middle).
+3. Pull the app icon down / click the menu, select **Lock Down** (Padlock icon).
+4. _Goal: So that when you "Clear RAM", the server does not get closed._
 
-1.  Buka aplikasi **Termux** dan **droidVNC-NG**.
-2.  Buka **Recent Apps** (Geser bawah ke tengah).
-3.  Tarik ikon aplikasi ke bawah / klik menu, pilih **Lock Down** (ikon Gembok).
-4.  _Tujuan: Agar saat "Clear RAM", server tidak ikut tertutup._
+### 3. Battery & Autostart Permissions
 
-### 3. Izin Baterai & Autostart
+1. **Settings > Battery > Background power consumption management**.
 
-1.  **Settings > Battery > Background power consumption management**.
-    - Set Termux & droidVNC-NG ke **High background power usage**.
-2.  **Settings > Applications and Permissions > Permission management > Autostart**.
-    - Aktifkan (ON) untuk Termux & droidVNC-NG.
+- Set Termux & droidVNC-NG to **High background power usage**.
 
-### 4. Setup droidVNC-NG (Untuk GUI)
+2. **Settings > Applications and Permissions > Permission management > Autostart**.
 
-1.  Download aplikasi **droidVNC-NG** di PlayStore.
-2.  Buka App, berikan izin **Accessibility** & **Screen Recording**.
-    - _Tips Vivo:_ Jika aksesibilitas sering mati sendiri, matikan lalu nyalakan lagi di pengaturan.
-3.  Set Password VNC di dalam aplikasi.
-4.  Klik **Start**.
+- Turn ON for Termux & droidVNC-NG.
 
-<br>
+### 4. Setup droidVNC-NG (For GUI)
 
-## ☁️ Tahap 2: Setup Cloudflare Tunnel
+1. Download the **droidVNC-NG** app from the PlayStore.
+2. Open the App, grant **Accessibility** & **Screen Recording** permissions.
 
-Kita menggunakan Cloudflare agar tidak perlu open port router.
+- _Vivo Tip:_ If accessibility turns off often, toggle it off and then on again in settings.
 
-1.  Login ke **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
-2.  Create Tunnel -> Pilih **Cloudflared**.
-3.  Simpan **Token** (kode panjang dimulai dengan `eyJhIjoi...`).
-4.  Di tab **Public Hostname**, tambahkan 3 jalur:
+3. Set the VNC Password inside the app.
+4. Click **Start**.
 
-| Subdomain | Domain         | Service Type | URL              | Fungsi                      |
-| :-------- | :------------- | :----------- | :--------------- | :-------------------------- |
-| `display` | `domainmu.com` | **HTTP**     | `localhost:8080` | Akses Layar HP (Web)        |
-| `server`  | `domainmu.com` | **SSH**      | `localhost:2022` | Akses Terminal Ubuntu (SSH) |
-| `termux`  | `domainmu.com` | **SSH**      | `localhost:8020` | Akses Terminal Termux (SSH) |
+## ☁️ Phase 2: Cloudflare Tunnel Setup
 
-**PENTING:** Port SSH Ubuntu adalah **2022**, bukan 8022. Pastikan konfigurasi Cloudflare mengarah ke `localhost:2022`.
+We use Cloudflare so we don't need to open router ports.
 
-<br>
+1. Login to **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
+2. Create Tunnel -> Select **Cloudflared**.
+3. Save the **Token** (long code starting with `eyJhIjoi...`).
+4. In the **Public Hostname** tab, add 3 routes:
 
-## 🚀 Tahap 3: Instalasi di Termux
+| Subdomain | Domain           | Service Type | URL              | Function                     |
+| --------- | ---------------- | ------------ | ---------------- | ---------------------------- |
+| `display` | `yourdomain.com` | **HTTP**     | `localhost:8080` | Phone Screen Access (Web)    |
+| `server`  | `yourdomain.com` | **SSH**      | `localhost:2022` | Ubuntu Terminal Access (SSH) |
+| `termux`  | `yourdomain.com` | **SSH**      | `localhost:8020` | Termux Terminal Access (SSH) |
 
-Sekarang kita setup "otak" servernya menggunakan script otomatis.
+**IMPORTANT:** The Ubuntu SSH Port is **2022**, not 8022. Ensure the Cloudflare configuration points to `localhost:2022`.
 
-### 1. Install Git (Awal Saja)
+## 🚀 Phase 3: Installation in Termux
 
-Buka Termux (kosongan), ketik:
+Now we set up the "brain" of the server using the automated script.
+
+### 1. Install Git (First Time Only)
+
+Open Termux (fresh), type:
 
 ```bash
 pkg update -y
@@ -82,302 +81,323 @@ pkg install git -y
 
 ### 2. Clone & Install
 
-Download repository ini dan jalankan installernya:
+Download this repository and run the installer:
 
 ```bash
 # Clone repo
 git clone https://github.com/brotherzhafif/zero-to-server.git
 cd zero-to-server/android
 
-# Jalankan installer (untuk setup awal)
+# Run installer (for initial setup)
 chmod 777 install.sh
 ./install.sh
+
 ```
 
-**ATAU** jika sudah terinstall sebelumnya dan ingin re-install/update:
+**OR** if previously installed and you want to re-install/update:
 
 ```bash
-# Update ke versi terbaru
+# Update to latest version
 chmod 777 update.sh
 ./update.sh
+
 ```
 
-### Apa yang dilakukan `install.sh`?
+### What does `install.sh` do?
 
-Script ini adalah **SETUP AWAL LENGKAP** yang hanya perlu dijalankan sekali. Script akan secara otomatis:
+This script is a **COMPLETE INITIAL SETUP** that only needs to be run once. The script will automatically:
 
-1. **[1/7] Membersihkan** sisa proses lama (Nginx, Cloudflared, SSH, noVNC, server.sh, tunnel.log).
-2. **[2/7] Update & Install Package** lengkap:
-   - `git`, `wget`, `nginx`, `openssh`, `tur-repo`, `proot-distro`, `cloudflared`
-3. **[3/7] Setup Ubuntu Environment** menggunakan proot-distro:
-   - Download & install Ubuntu (jika belum ada)
-   - Install di dalam Ubuntu: `openssh-server`, `git`, `curl`, `nano`, `net-tools`
-   - Konfigurasi SSH Ubuntu pada **Port 2022**
-   - Buat folder `/root/project` untuk development
-4. **[4/7] Input Password Ubuntu** untuk login VS Code Remote SSH (WAJIB!)
-5. **[5/7] Download noVNC** dan buat landing page custom dengan branding kamu:
-   - Tanya nama web (contoh: `Raja's Lab`)
-   - Tanya nama pemilik (contoh: `Raja Zhafif`)
-   - Generate `index.html` dengan design hacker-style
-6. **[6/7] Buat Konfigurasi Nginx** otomatis:
-   - Reverse proxy dari port 8080 ke noVNC (6080)
-   - Security rules: blokir akses file sensitif (`.git`, `.github`, README.md, dll)
-7. **[7/7] Input Token Cloudflare** dan Generate Script `server.sh` (FINAL)
+1. **[1/7] Clean up** old processes (Nginx, Cloudflared, SSH, noVNC, server.sh, tunnel.log).
+2. **[2/7] Update & Install Packages** complete:
 
-### Input yang akan diminta saat instalasi
+- `git`, `wget`, `nginx`, `openssh`, `tur-repo`, `proot-distro`, `cloudflared`
 
-- **Password Ubuntu**: untuk login VS Code Remote SSH (SANGAT PENTING!)
-- **Nama Web**: judul halaman depan (contoh: `Raja's Lab`)
-- **Nama Pemilik**: teks di intro page (contoh: `Raja Zhafif`)
-- **Token Cloudflare**: kode tunnel `eyJhIjoi...` dari Cloudflare Zero Trust Dashboard
+3. **[3/7] Setup Ubuntu Environment** using proot-distro:
 
-### Apa yang dilakukan `update.sh`?
+- Download & install Ubuntu (if not present)
+- Install inside Ubuntu: `openssh-server`, `git`, `curl`, `nano`, `net-tools`
+- Configure Ubuntu SSH on **Port 2022**
+- Create `/root/project` folder for development
 
-Script `update.sh` adalah untuk **UPDATE SISTEM** (bukan setup awal). Script ini lebih ringan dan akan:
+4. **[4/7] Input Ubuntu Password** for VS Code Remote SSH login (MANDATORY!)
+5. **[5/7] Download noVNC** and create custom landing page with your branding:
 
-1. **[1/3] Mematikan Server Sementara** - Kill semua proses (cloudflared, nginx, sshd, noVNC) agar update lancar.
-2. **[2/3] Update Termux Host** - Jalankan `pkg update` dan `pkg upgrade` untuk update Termux & cloudflared.
-3. **[3/3] Update Ubuntu Guest** - Masuk ke Ubuntu dan jalankan `apt update`, `apt upgrade`, `apt autoremove`.
-4. **[4/3] Panggil `server.sh`** - Setelah update selesai, script ini otomatis menjalankan `server.sh` untuk nyalakan ulang server.
+- Ask for web name (e.g., `Raja's Lab`)
+- Ask for owner name (e.g., `Raja Zhafif`)
+- Generate `index.html` with hacker-style design
 
-**Gunakan ini ketika:**
+6. **[6/7] Create Nginx Configuration** automatically:
 
-- Ada update package Termux terbaru
-- Ada update security Ubuntu
-- Server error dan perlu re-start dengan clean
+- Reverse proxy from port 8080 to noVNC (6080)
+- Security rules: block sensitive access (`.git`, `.github`, README.md, etc.)
 
-### Apa yang dilakukan `uninstall.sh`?
+7. **[7/7] Input Cloudflare Token** and Generate `server.sh` Script (FINAL)
 
-Script ini menghapus server Android secara bersih:
+### Inputs required during installation
 
-1. Mematikan semua proses (cloudflared, nginx, sshd, noVNC, proot).
-2. Menghapus Ubuntu Proot-Distro dan cache.
-3. Menghapus file server (`noVNC/`, `server.sh`, konfigurasi nginx, dan token Cloudflare lokal).
-4. Membersihkan SSH known_hosts agar koneksi baru tidak bentrok.
+- **Ubuntu Password**: for VS Code Remote SSH login (VERY IMPORTANT!)
+- **Web Name**: title of the front page (e.g., `Raja's Lab`)
+- **Owner Name**: text on the intro page (e.g., `Raja Zhafif`)
+- **Cloudflare Token**: tunnel code `eyJhIjoi...` from Cloudflare Zero Trust Dashboard
+
+### What does `update.sh` do?
+
+The `update.sh` script is for **SYSTEM UPDATES** (not initial setup). This script is lighter and will:
+
+1. **[1/3] Stop Server Temporarily** - Kill all processes (cloudflared, nginx, sshd, noVNC) for a smooth update.
+2. **[2/3] Update Termux Host** - Run `pkg update` and `pkg upgrade` to update Termux & cloudflared.
+3. **[3/3] Update Ubuntu Guest** - Enter Ubuntu and run `apt update`, `apt upgrade`, `apt autoremove`.
+4. **[4/3] Call `server.sh**`- After the update finishes, this script automatically runs`server.sh` to restart the server.
+
+**Use this when:**
+
+- There are new Termux package updates.
+- There are Ubuntu security updates.
+- Server error and needs a clean restart.
+
+### What does `uninstall.sh` do?
+
+This script completely removes the Android server cleanly:
+
+1. Kills all processes (cloudflared, nginx, sshd, noVNC, proot).
+2. Removes Ubuntu Proot-Distro and cache.
+3. Removes server files (`noVNC/`, `server.sh`, nginx config, and local Cloudflare token).
+4. Cleans SSH known_hosts so new connections don't conflict.
 
 ---
 
-### Script `server.sh` (PENJELASAN DETAIL)
+### Script `server.sh` (DETAILED EXPLANATION)
 
-File ini **DIBUAT OTOMATIS oleh `install.sh`** berdasarkan token Cloudflare yang kamu input. Setiap kali kamu menjalankan `./server.sh`, maka:
+This file is **GENERATED AUTOMATICALLY by `install.sh**`based on the Cloudflare token you input. Every time you run`./server.sh`:
 
-**[+] Reset Proses** - Kill semua proses lama agar fresh start:
+**[+] Reset Processes** - Kill all old processes for a fresh start:
 
 ```bash
 pkill -f "novnc_proxy"
 pkill -f "nginx"
 pkill -f "cloudflared"
 pkill -f "sshd"
+
 ```
 
-**[1] Nyalakan Ubuntu SSH (Port 2022) - UTAMA untuk VS Code**
+**[1] Start Ubuntu SSH (Port 2022) - MAIN for VS Code**
 
 ```bash
-proot-distro login ubuntu -- mkdir -p /run/sshd  # Buat folder run dulu (FIX!)
+proot-distro login ubuntu -- mkdir -p /run/sshd  # Create run folder first (FIX!)
 nohup proot-distro login ubuntu -- /usr/sbin/sshd -D > /dev/null 2>&1 &
+
 ```
 
-- Ini adalah **SSH UTAMA** untuk VS Code Remote SSH.
-- Jalan di background tanpa blocking (`nohup`).
-- Output di-direct ke `/dev/null` supaya tidak ganggu terminal.
-- FIX: Membuat folder `/run/sshd` duluan biar SSH tidak crash (bad handshake).
+- This is the **MAIN SSH** for VS Code Remote SSH.
+- Runs in the background without blocking (`nohup`).
+- Output directed to `/dev/null` to keep terminal clean.
+- FIX: Creates `/run/sshd` folder first so SSH doesn't crash (bad handshake).
 
-**[2] Nyalakan Termux SSH (Port 8022) - CADANGAN**
+**[2] Start Termux SSH (Port 8022) - BACKUP**
 
 ```bash
 sshd
+
 ```
 
-- SSH untuk Termux itu sendiri.
-- Hanya cadangan/maintenance jika Ubuntu SSH error.
+- SSH for Termux itself.
+- Only a backup/maintenance if Ubuntu SSH errors.
 
-**[3] Nyalakan noVNC & Nginx (GUI)**
+**[3] Start noVNC & Nginx (GUI)**
 
 ```bash
 nohup ./noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6080 > /dev/null 2>&1 &
 nginx
+
 ```
 
-- `novnc_proxy`: Buat server VNC di port 6080, terhubung ke droidVNC-NG di port 5900.
-- `nginx`: Jalankan reverse proxy di port 8080 (terhubung ke Cloudflare).
+- `novnc_proxy`: Creates VNC server on port 6080, connected to droidVNC-NG on port 5900.
+- `nginx`: Runs reverse proxy on port 8080 (connected to Cloudflare).
 
-**[4] Konek Cloudflare Tunnel (Final)**
+**[4] Connect Cloudflare Tunnel (Final)**
 
 ```bash
 nohup cloudflared tunnel run --token $TOKEN > tunnel.log 2>&1 &
-```
-
-- Token yang kamu input pada saat instalasi disimpan di dalam `server.sh`.
-- Cloudflare tunnel akan expose:
-  - `display.domainmu.com` → `localhost:8080` (Nginx + noVNC)
-  - `server.domainmu.com:2022` → `localhost:2022` (Ubuntu SSH)
-- Output di-save ke `tunnel.log` untuk debugging jika ada masalah.
-
-**[✅ Output di Terminal]**
 
 ```
-✅ SERVER SIAP! Akses di:
-🖥️  Layar HP:   https://display.brotherzhafif.my.id
+
+- The Token you input during installation is saved inside `server.sh`.
+- Cloudflare tunnel will expose:
+- `display.yourdomain.com` → `localhost:8080` (Nginx + noVNC)
+- `server.yourdomain.com:2022` → `localhost:2022` (Ubuntu SSH)
+
+- Output saved to `tunnel.log` for debugging if there are issues.
+
+**[✅ Terminal Output]**
+
+```
+✅ SERVER READY! Access at:
+🖥️  Phone Screen:   https://display.brotherzhafif.my.id
 📟 VS Code:    ssh server.brotherzhafif.my.id
-    (User: root | Port Asli: 2022)
+    (User: root | Real Port: 2022)
+
 ```
 
 ---
 
-### Visualisasi Alur Startup
+### Startup Flow Visualization
 
 ```
-[A] Kamu Jalankan → ./server.sh (atau ./update.sh)
+[A] You Run → ./server.sh (or ./update.sh)
         ↓
-[B] Reset Proses (Kill semua proses lama)
+[B] Reset Processes (Kill all old processes)
         ↓
-[C] Nyalakan:
+[C] Turn On:
     ├─ Ubuntu SSH (Port 2022) → VS CODE REMOTE SSH
     ├─ Termux SSH (Port 8022) → Backup SSH
-    ├─ noVNC (Port 6080) → GUI VNC Internal
-    ├─ Nginx (Port 8080) → Reverse Proxy (dari Cloudflare)
-    └─ Cloudflare Tunnel → Expose ke Internet
+    ├─ noVNC (Port 6080) → Internal GUI VNC
+    ├─ Nginx (Port 8080) → Reverse Proxy (from Cloudflare)
+    └─ Cloudflare Tunnel → Expose to Internet
         ↓
-[D] Kamu bisa akses:
-    ├─ https://display.domainmu.com → GUI Layar HP
-    └─ ssh root@server.domainmu.com → Terminal Ubuntu (VS Code)
+[D] You can access:
+    ├─ https://display.yourdomain.com → Phone Screen GUI
+    └─ ssh root@server.yourdomain.com → Ubuntu Terminal (VS Code)
+
 ```
 
-<br>
+## ▶️ How to Run the Server
 
-## ▶️ Cara Menjalankan Server
-
-### Startup Pertama Kali
+### First Time Startup
 
 ```bash
 cd ~/zero-to-server/android
 chmod +x install.sh
 ./install.sh
+
 ```
 
-Proses ini akan:
+This process will:
 
-1. Setup ubuntu + SSH port 2022
-2. Download noVNC & buat landing page
-3. Setup Nginx reverse proxy
-4. Generate `server.sh` dengan token Cloudflare kamu
+1. Setup ubuntu + SSH port 2022.
+2. Download noVNC & create landing page.
+3. Setup Nginx reverse proxy.
+4. Generate `server.sh` with your Cloudflare token.
 
-**⏱️ Durasi:** ~10-15 menit (tergantung internet & ukuran file)
+**⏱️ Duration:** ~10-15 minutes (depends on internet & file size)
 
-### Startup Setelah Itu (Normal)
+### Startup After That (Normal)
 
-Cukup jalankan `server.sh` yang sudah di-generate:
+Simply run the generated `server.sh`:
 
 ```bash
 ./server.sh
+
 ```
 
-### Uninstall (Hapus Total)
+### Uninstall (Total Wipe)
 
-Jika ingin menghapus semua komponen server:
+If you want to remove all server components:
 
 ```bash
 chmod +x uninstall.sh
 ./uninstall.sh
+
 ```
 
-Atau jika mau update system:
+Or if you want to update system:
 
 ```bash
 ./update.sh
+
 ```
 
-Script ini akan:
+This script will:
 
 - Update Termux + Ubuntu
-- Restart semua service
-- Otomatis panggil `server.sh`
+- Restart all services
+- Automatically call `server.sh`
 
-### Startup Backup (Tanpa Update)
+### Backup Startup (No Update)
 
-Jika ingin hanya nyalakan service tanpa update:
+If you just want to turn on services without updating:
 
 ```bash
 ./server.sh
+
 ```
 
 ---
 
-### A. Akses Layar HP (Web VNC)
+### A. Phone Screen Access (Web VNC)
 
-Buka browser di laptop/HP lain, akses:
-👉 `https://display.domainmu.com/vnc.html` atau `https://display.domainmu.com`
+Open a browser on another laptop/phone, access:
+👉 `https://display.yourdomain.com/vnc.html` or `https://display.yourdomain.com`
 
-Halaman landing akan menampilkan:
+The landing page will display:
 
 - **🚀 GUI ACCESS** - Full VNC interface
 - **⚡ LITE MODE** - Lightweight VNC
 
-### B. Akses Terminal Ubuntu (VS Code Remote SSH)
+### B. Ubuntu Terminal Access (VS Code Remote SSH)
 
-Untuk mengakses environment Ubuntu via VS Code Remote SSH:
+To access the Ubuntu environment via VS Code Remote SSH:
 
-1. Pastikan Laptop sudah terinstall **cloudflared** (Cloudflare Tunnel client).
-2. Edit file config SSH di laptop (`C:\Users\User\.ssh\config` atau `~/.ssh/config` di Linux/Mac):
+1. Ensure the Laptop has **cloudflared** installed (Cloudflare Tunnel client).
+2. Edit the SSH config file on laptop (`C:\Users\User\.ssh\config` or `~/.ssh/config` on Linux/Mac):
 
 ```text
 Host vivo-ubuntu
-    HostName server.domainmu.com
+    HostName server.yourdomain.com
     User root
     Port 22
     ProxyCommand cloudflared access ssh --hostname %h
+
 ```
 
-3. Buka VS Code, install extension **Remote - SSH**.
-4. Tekan `Ctrl+Shift+P`, pilih **Remote-SSH: Connect to Host**.
-5. Pilih **vivo-ubuntu** dari daftar.
-6. Masukkan password Ubuntu yang kamu buat saat instalasi.
+3. Open VS Code, install the **Remote - SSH** extension.
+4. Press `Ctrl+Shift+P`, select **Remote-SSH: Connect to Host**.
+5. Select **vivo-ubuntu** from the list.
+6. Enter the Ubuntu password you created during installation.
 
-**Catatan:**
+**Notes:**
 
-- User login: `root` (default Ubuntu proot)
-- Port SSH Ubuntu: **2022** (di dalam tunnel), tapi dari luar tetap gunakan port **22**
-- Folder project: `/root/project`
+- User login: `root` (Ubuntu proot default)
+- Ubuntu SSH Port: **2022** (inside tunnel), but externally use port **22**
+- Project folder: `/root/project`
 
-<br>
+## 📝 Code Explanation (Under the Hood)
 
-## 📝 Penjelasan Kode (Under the Hood)
-
-### Struktur File Project
+### Project File Structure
 
 ```
 zero-to-server/
-├── readme.md               (File ini - dokumentasi)
+├── readme.md               (This file - documentation)
 ├── android/
-│   ├── install.sh         (Setup awal - JALANKAN SEKALI)
-│   ├── update.sh          (Update sistem - JALANKAN BERKALA)
-│   ├── uninstall.sh       (Hapus server & Ubuntu Proot)
-│   ├── readme.md          (Dokumentasi Android)
+│   ├── install.sh         (Initial Setup - RUN ONCE)
+│   ├── update.sh          (System Update - RUN PERIODICALLY)
+│   ├── uninstall.sh       (Remove server & Ubuntu Proot)
+│   ├── readme.md          (Android Documentation)
 │   └── server.sh          (GENERATED - Startup script)
 ├── windows/
 │   └── readme.md
 └── linux/
     └── readme.md
+
 ```
 
-**File yang di-GENERATE (Dibuat Otomatis):**
+**Files GENERATED (Created Automatically):**
 
-- `server.sh` - Dibuat oleh `install.sh` saat pertama kali
-- `noVNC/` - Folder cloned dari GitHub
-- `index.html` - Di-generate di dalam `noVNC/`
+- `server.sh` - Created by `install.sh` first time.
+- `noVNC/` - Folder cloned from GitHub.
+- `index.html` - Generated inside `noVNC/`.
 
-### Struktur Nginx Configuration
+### Nginx Configuration Structure
 
-Konfigurasi Nginx di-generate otomatis oleh `install.sh` ke file `$PREFIX/etc/nginx/nginx.conf`:
+Nginx configuration is generated automatically by `install.sh` into `$PREFIX/etc/nginx/nginx.conf`:
 
 ```nginx
 worker_processes 1;
 events { worker_connections 1024; }
 http {
     server {
-        listen 8080;  # PORT: Terima dari Cloudflare
+        listen 8080;  # PORT: Receive from Cloudflare
 
-        # 1. PROXY KE noVNC (Port 6080)
+        # 1. PROXY TO noVNC (Port 6080)
         location / {
             proxy_pass http://127.0.0.1:6080/;
             proxy_http_version 1.1;
@@ -386,45 +406,44 @@ http {
             proxy_set_header Host $host;
         }
 
-        # 2. SECURITY: Blokir file/folder sensitif (diawali titik)
-        # Memblokir: .git, .github, .gitignore, dll
+        # 2. SECURITY: Block sensitive files/folders (starting with dot)
+        # Blocks: .git, .github, .gitignore, etc.
         location ~ /\.(?!well-known) { deny all; }
 
-        # 3. SECURITY: Blokir dokumen project yang tidak perlu publik
-        # Memblokir: README.md, AUTHORS, LICENSE, package.json
+        # 3. SECURITY: Block project documents not needed publicly
+        # Blocks: README.md, AUTHORS, LICENSE, package.json
         location ~ /(README.md|AUTHORS|LICENSE|package.json) { deny all; }
     }
 }
+
 ```
 
-**Penjelasan WebSocket Support:**
+**WebSocket Support Explanation:**
 
-- `Upgrade` header: Untuk upgrade HTTP → WebSocket
-- `Connection "Upgrade"`: Konfirmasi upgrade connection ke WebSocket
-- Ini **PENTING** buat noVNC agar layar HP bisa streaming via WebSocket
-
-<br>
+- `Upgrade` header: To upgrade HTTP → WebSocket.
+- `Connection "Upgrade"`: Confirm upgrade connection to WebSocket.
+- This is **IMPORTANT** for noVNC so the phone screen can stream via WebSocket.
 
 ## ⚠️ Troubleshooting
 
-| Error                                | Penyebab                                                | Solusi                                                         |
-| ------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------- |
-| **SSH Connection Refused**           | Ubuntu SSH tidak jalan / Port 2022 error                | Cek: `proot-distro login ubuntu -- ps aux \| grep sshd`        |
-| **VS Code tidak bisa connect**       | Password salah / cloudflared belum install di laptop    | Cek password saat install, install cloudflared di laptop       |
-| **Layar Web VNC Hitam/Macet**        | droidVNC-NG tidak aktif / Accessibility permission off  | Nyalakan droidVNC-NG, cek Setting > Accessibility              |
-| **Server mati sendiri**              | HP tidur (Deep Sleep) / Background limit terlalu rendah | Lakukan setup "Lock Recent Apps" & battery management          |
-| **noVNC tidak loading**              | noVNC port 6080 blocked / Nginx error                   | Cek: `nginx -t` dan `pkill -f novnc_proxy && ./server.sh`      |
-| **Cloudflare tunnel not connecting** | Token invalid / salah domain di Cloudflare              | Cek token di `server.sh`, pastikan Public Hostname sudah setup |
-| **Ubuntu SSH: Bad Handshake**        | Folder `/run/sshd` tidak ada                            | Script sudah fix: auto create folder di `server.sh`            |
+| Error                                | Cause                                                | Solution                                                     |
+| ------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| **SSH Connection Refused**           | Ubuntu SSH not running / Port 2022 error             | Check: `proot-distro login ubuntu -- ps aux                  | grep sshd` |
+| **VS Code cannot connect**           | Wrong password / cloudflared not installed on laptop | Check password from install, install cloudflared on laptop   |
+| **Web VNC Screen Black/Stuck**       | droidVNC-NG inactive / Accessibility permission off  | Turn on droidVNC-NG, check Setting > Accessibility           |
+| **Server dies by itself**            | Phone sleeps (Deep Sleep) / Background limit too low | Perform "Lock Recent Apps" setup & battery management        |
+| **noVNC not loading**                | noVNC port 6080 blocked / Nginx error                | Check: `nginx -t` and `pkill -f novnc_proxy && ./server.sh`  |
+| **Cloudflare tunnel not connecting** | Invalid token / wrong domain in Cloudflare           | Check token in `server.sh`, ensure Public Hostname is set up |
+| **Ubuntu SSH: Bad Handshake**        | Folder `/run/sshd` missing                           | Script fixed: auto create folder in `server.sh`              |
 
 ---
 
-## 📊 Rangkuman Setup & File
+## 📊 Setup & File Summary
 
 ### Script Flow
 
 ```
-SETUP AWAL (SEKALI):
+INITIAL SETUP (ONCE):
 ./install.sh
     ├─ [1/7] Clean up
     ├─ [2/7] Install packages
@@ -432,52 +451,51 @@ SETUP AWAL (SEKALI):
     ├─ [4/7] Setup Ubuntu SSH (Port 2022)
     ├─ [5/7] Download noVNC + Landing page
     ├─ [6/7] Setup Nginx reverse proxy
-    └─ [7/7] Generate server.sh ← FILE INI PALING PENTING!
+    └─ [7/7] Generate server.sh ← MOST IMPORTANT FILE!
 
 NORMAL OPERATION:
 ./server.sh
-    ├─ Reset proses
+    ├─ Reset processes
     ├─ Start Ubuntu SSH (Port 2022)
     ├─ Start Termux SSH (Port 8022)
     ├─ Start noVNC (Port 6080)
     ├─ Start Nginx (Port 8080)
     └─ Start Cloudflare Tunnel
 
-UPDATE BERKALA:
+PERIODIC UPDATE:
 ./update.sh
-    ├─ Stop semua service
+    ├─ Stop all services
     ├─ Update Termux host
     ├─ Update Ubuntu guest
     └─ Auto call ./server.sh
+
 ```
 
-### Port & Akses
+### Port & Access
 
-| Komponen       | Port (Internal)  | Akses Luar               | Fungsi                     |
-| -------------- | ---------------- | ------------------------ | -------------------------- |
-| **Ubuntu SSH** | `localhost:2022` | `server.domainmu.com:22` | VS Code Remote SSH (UTAMA) |
-| **Termux SSH** | `localhost:8022` | -                        | Backup SSH Termux          |
-| **noVNC**      | `localhost:6080` | -                        | VNC Server Internal        |
-| **Nginx**      | `localhost:8080` | `display.domainmu.com`   | Reverse Proxy ke noVNC     |
-| **Cloudflare** | -                | `display.domainmu.com`   | GUI dari internet          |
-| **Cloudflare** | -                | `server.domainmu.com`    | SSH dari internet          |
+| Component      | Port (Internal)  | External Access            | Function                  |
+| -------------- | ---------------- | -------------------------- | ------------------------- |
+| **Ubuntu SSH** | `localhost:2022` | `server.yourdomain.com:22` | VS Code Remote SSH (MAIN) |
+| **Termux SSH** | `localhost:8022` | -                          | Backup SSH Termux         |
+| **noVNC**      | `localhost:6080` | -                          | Internal VNC Server       |
+| **Nginx**      | `localhost:8080` | `display.yourdomain.com`   | Reverse Proxy to noVNC    |
+| **Cloudflare** | -                | `display.yourdomain.com`   | GUI from internet         |
+| **Cloudflare** | -                | `server.yourdomain.com`    | SSH from internet         |
 
 ### Environment
 
 - **Host:** Termux (Android environment)
-- **Guest:** Ubuntu proot-distro (Linux environment dalam Termux)
-- **VS Code:** Akses ke Ubuntu via SSH (Port 2022)
-- **GUI:** Akses via noVNC + Nginx (Port 8080)
-- **Internet:** Semua diexpose via Cloudflare Tunnel (aman, tidak perlu open port router)
+- **Guest:** Ubuntu proot-distro (Linux environment inside Termux)
+- **VS Code:** Access to Ubuntu via SSH (Port 2022)
+- **GUI:** Access via noVNC + Nginx (Port 8080)
+- **Internet:** All exposed via Cloudflare Tunnel (secure, no need to open router ports)
 
-### Tools yang Digunakan
+### Tools Used
 
-- **Termux:** Container Linux di Android
-- **proot-distro:** Virtualisasi Ubuntu di dalam Termux
+- **Termux:** Linux Container on Android
+- **proot-distro:** Ubuntu virtualization inside Termux
 - **noVNC:** Web-based VNC client
 - **Nginx:** Reverse proxy & web server
-- **openssh-server:** SSH server (di Ubuntu)
+- **openssh-server:** SSH server (in Ubuntu)
 - **cloudflared:** Cloudflare Tunnel client
-- **droidVNC-NG:** VNC server untuk screen recording HP
-
----
+- **droidVNC-NG:** VNC server for phone screen recording

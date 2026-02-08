@@ -1,121 +1,108 @@
 # 🌐 Zero to Server
 
-> **Turn any device into a accessible Cloud Server (Android, Windows, Linux).**
-
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Status](https://img.shields.io/badge/Status-Active_Development-green)
-![Author](https://img.shields.io/badge/Maintained_by-Student-orange)
+> **Turn any device into an accessible Cloud Server (Android, Windows, Linux).**
 
 ## 📖 About The Project
 
-Project ini bertujuan untuk mendemokratisasi akses server. Kami percaya bahwa setiap orang bisa memiliki server sendiri tanpa harus menyewa VPS mahal, cukup dengan memanfaatkan device yang sudah dimiliki (HP Android bekas, Laptop Windows, atau Mini PC Linux).
+This project aims to democratize server access. We believe that everyone should be able to own their own server without renting expensive VPSs, simply by utilizing devices they already own (used Android phones, Windows Laptops, or Linux Mini PCs).
 
-Inti dari project ini adalah mengubah device lokal menjadi server yang bisa diakses dari mana saja via internet dengan aman dan mudah.
+The core of this project is transforming a local device into a server that is accessible from anywhere via the internet, securely and easily.
 
 ### 🛠️ The Tech Stack (Core)
 
-Kami menggunakan kombinasi teknologi _open-source_ yang powerful untuk menembus batasan jaringan (CGNAT) tanpa perlu IP Public statis:
+We use a powerful combination of *open-source* technologies to bypass network restrictions (CGNAT) without needing a static Public IP:
 
-- **☁️ Cloudflare Tunnel:** Mengekspos server lokal ke internet secara aman (tanpa Open Port di router).
-- **💻 SSH (Secure Shell):** Akses penuh ke terminal server untuk coding, remote config, dan manajemen file (Backend).
-- **🖥️ VNC (Virtual Network Computing):** Akses visual/layar desktop dari device server via browser (Frontend/GUI).
-- **🔧 Nginx:** Reverse proxy untuk mengatur lalu lintas antara Cloudflare, VNC, dan Localhost.
+* **☁️ Cloudflare Tunnel:** Expose local servers to the internet securely (no Open Ports on the router).
+* **💻 SSH (Secure Shell):** Full access to the server terminal for coding, remote config, and file management (Backend).
+* **🖥️ VNC (Virtual Network Computing):** Visual/desktop screen access from the server device via browser (Frontend/GUI).
+* **🔧 Nginx:** Reverse proxy to manage traffic between Cloudflare, VNC, and Localhost.
 
-<br>
+## ⚠️ Disclaimer (Important!)
 
-## ⚠️ Disclaimer (Penting!)
+> **This project is created for EDUCATIONAL and LEARNING purposes.**
 
-> **Project ini dibuat untuk tujuan EDUKASI dan PEMBELAJARAN.**
+This project is developed by a student as a means of researching network infrastructure. Please note the following:
 
-Project ini dikembangkan oleh mahasiswa sebagai sarana riset infrastruktur jaringan. Harap perhatikan hal berikut:
-
-1.  **Keamanan:** Konfigurasi keamanan di sini adalah _standard practice_ untuk hobi/dev, bukan _enterprise-grade_. Jangan gunakan untuk menyimpan data perbankan, _production database_ krusial, atau rahasia negara. **Use at your own risk.**
-2.  **Stabilitas:** Performa server sangat bergantung pada spesifikasi device dan koneksi internet rumah kamu.
-3.  **Riset Lanjutan:** Pengguna sangat disarankan untuk meriset lebih lanjut mengenai _firewall_, _SSH Key hardening_, dan manajemen _token_ agar server lebih aman.
-
-<br>
+1. **Security:** The security configuration here follows *standard practices* for hobby/dev, not *enterprise-grade*. Do not use this to store banking data, crucial *production databases*, or state secrets. **Use at your own risk.**
+2. **Stability:** Server performance depends heavily on device specifications and your home internet connection.
+3. **Advanced Research:** Users are highly advised to research further regarding *firewalls*, *SSH Key hardening*, and *token* management to make the server more secure.
 
 ## 🗺️ Supported Platforms & Status
 
-Pilih sistem operasi device yang ingin kamu jadikan server:
+Choose the operating system of the device you want to turn into a server:
 
 ### 1. 🤖 Android Server (Termux)
 
 > **Status:** ✅ **FIRST RELEASE (Stable)**
 
-Mengubah HP Android menjadi Linux Server mini yang powerful. Sangat hemat daya (bisa pakai HP layar pecah sekalipun).
+Turns an Android phone into a powerful mini Linux Server. Very power-efficient (can even use phones with broken screens).
 
-- **Base:** Termux & Proot-Distro.
-- **Features:** Akses layar HP via Browser (noVNC), Full Terminal SSH via VS Code, Auto-Install Script.
-- **Cocok untuk:** Hosting bot WA/Discord, Web Server ringan, Belajar Linux.
+* **Base:** Termux & Proot-Distro.
+* **Features:** Screen access via Browser (noVNC), Full SSH Terminal via VS Code, Auto-Install Script.
+* **Suitable for:** Hosting WA/Discord bots, Light Web Server, Learning Linux.
 
-👉 **[Buka Panduan Android Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/android)**
+👉 **[Open Android Setup Guide](https://github.com/brotherzhafif/zero-to-server/tree/main/android)**
 
 ### 2. 🪟 Windows Server
 
 > **Status:** 🧪 **Beta (Active Development)**
 
-Memanfaatkan laptop/PC Windows sebagai server tanpa perlu dual-boot.
+Utilizes a Windows laptop/PC as a server without dual-booting.
 
-- **Base:** PowerShell / WSL (Windows Subsystem for Linux).
-- **Features:** Remote Desktop via Browser, PowerShell SSH access.
-- **Cocok untuk:** Server Game (Minecraft/SAMP), Media Server (Plex), Heavy processing.
+* **Base:** PowerShell / WSL (Windows Subsystem for Linux).
+* **Features:** Remote Desktop via Browser, PowerShell SSH access.
+* **Suitable for:** Game Servers (Minecraft/SAMP), Media Servers (Plex), Heavy processing.
 
-👉 **[Buka Panduan Windows Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/windows)**
+👉 **[Open Windows Setup Guide](https://github.com/brotherzhafif/zero-to-server/tree/main/windows)**
 
 ### 3. 🐧 Linux Server (Ubuntu/Debian)
 
 > **Status:** 🧪 **Beta (Active Development)**
 
-Setup klasik untuk device seperti Raspberry Pi, STB Bekas, atau Mini PC.
+Classic setup for devices like Raspberry Pi, Used STBs, or Mini PCs.
 
-- **Base:** Systemd Services.
-- **Features:** Full Automation, Docker Support, Hardened Security.
-- **Cocok untuk:** Home Lab, Docker Container, Home Assistant.
+* **Base:** Systemd Services.
+* **Features:** Full Automation, Docker Support, Hardened Security.
+* **Suitable for:** Home Lab, Docker Containers, Home Assistant.
 
-👉 **[Buka Panduan Linux Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/linux)**
-
-<br>
+👉 **[Open Linux Setup Guide](https://github.com/brotherzhafif/zero-to-server/tree/main/linux)**
 
 ## 🔐 Architecture Overview
 
-Secara umum, beginilah cara server kamu bekerja di semua platform:
+In general, here is how your server works across all platforms:
 
 ```mermaid
 graph LR
-    User["User di Internet"] -- "HTTPS/SSH" --> CF["Cloudflare Edge"]
-    CF -- "Tunnel (Encrypted)" --> LocalDevice["Device Kamu (Android/PC)"]
+    User["User on Internet"] -- "HTTPS/SSH" --> CF["Cloudflare Edge"]
+    CF -- "Tunnel (Encrypted)" --> LocalDevice["Your Device (Android/PC)"]
     LocalDevice --> Nginx["Nginx Proxy"]
-    Nginx -- "Port 8080" --> VNC["Visual GUI (Layar)"]
-    Nginx -- "Port 22/8022" --> SSH["Terminal SSH"]
+    Nginx -- "Port 8080" --> VNC["Visual GUI (Screen)"]
+    Nginx -- "Port 22/8022" --> SSH["SSH Terminal"]
 
 ```
 
-1. **User** mengakses domain (misal: `server.namakamu.com`).
-2. **Cloudflare** menerima request dan meneruskannya lewat jalur khusus (Tunnel) ke device kamu di rumah.
-3. **Device kamu** menerima paket tersebut tanpa perlu setting Router/Modem.
-4. **Nginx** di dalam device memilah: "Mau lihat layar? Ke VNC. Mau coding? Ke SSH."
-
-<br>
+1. **User** accesses the domain (e.g., `server.yourname.com`).
+2. **Cloudflare** receives the request and forwards it through a specific path (Tunnel) to your device at home.
+3. **Your device** receives the packet without needing Router/Modem settings.
+4. **Nginx** inside the device sorts it: "Want to see the screen? Go to VNC. Want to code? Go to SSH."
 
 ## 🤝 Contributing
 
-Karena project ini berbasis komunitas dan pembelajaran, kontribusi sangat diharapkan! Jika kamu punya ide untuk memperketat keamanan atau script otomatisasi untuk Windows/Linux:
+Since this is a community and learning-based project, contributions are highly appreciated! If you have ideas to tighten security or automation scripts for Windows/Linux:
 
-1. Fork repository ini.
-2. Buat branch fitur baru (`git checkout -b fitur-keren`).
-3. Commit perubahan kamu (`git commit -m 'Menambah fitur keamanan SSH'`).
-4. Push ke branch (`git push origin fitur-keren`).
-5. Buat Pull Request.
-
-<br>
+1. Fork this repository.
+2. Create a new feature branch (`git checkout -b cool-feature`).
+3. Commit your changes (`git commit -m 'Added SSH security features'`).
+4. Push to the branch (`git push origin cool-feature`).
+5. Create a Pull Request.
 
 ## 📞 Author & Contact
 
-Dibuat dengan ❤️ dan ☕ oleh **Raja Zhafif Raditya Harahap**
+Made with ❤️ and ☕ by **Raja Zhafif Raditya Harahap**
 
-* Project ini adalah bagian dari dokumentasi perjalanan belajar *System Administration* & *Cloud Engineering*.
-* Jangan ragu untuk membuka **Issues** jika menemukan bug atau kesulitan saat setup.
+* This project is part of the documentation of my learning journey in *System Administration* & *Cloud Engineering*.
+* Don't hesitate to open **Issues** if you find bugs or difficulties during setup.
 
 Happy Server Building! 🚀
-> Semua bisa dibuat asal kita niat
+
+> Anything is possible with enough determination.

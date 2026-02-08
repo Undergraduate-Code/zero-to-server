@@ -1,182 +1,188 @@
 # 🐧 Linux to Cloud Server (Native Systemd)
 
-Project ini mengubah Laptop/PC Linux (Ubuntu/Debian/Mint/Kali) atau VPS menjadi **Production Server** yang bisa diakses dari internet tanpa IP Public. Versi ini paling stabil karena berjalan secara native menggunakan **Systemd Service**.
+This project transforms a Linux Laptop/PC (Ubuntu/Debian/Mint/Kali) or VPS into a **Production Server** accessible from the internet without a Public IP. This version is the most stable as it runs natively using **Systemd Services**.
 
-**Fitur Utama:**
+**Key Features:**
 
-- **GUI Access:** Akses layar Desktop via Browser (noVNC) -> `display.domain.com`
-- **SSH Access:** Akses Terminal Root via SSH (Port 22) -> `linux.domain.com`
-- **Auto-Start:** Server otomatis menyala saat booting (menggunakan Systemd).
-- **Auto-Setup:** Script Bash otomatis (Cloudflared, Python venv, Systemd).
+- **GUI Access:** Desktop Screen access via Browser (noVNC) -> `display.domain.com`
+- **SSH Access:** Root Terminal access via SSH (Port 22) -> `linux.domain.com`
+- **Auto-Start:** Server automatically starts on boot (using Systemd).
+- **Auto-Setup:** Automated Bash script (Cloudflared, Python venv, Systemd).
 
-<br>
+## 🛠️ Phase 1: Linux Preparation (Mandatory!)
 
-## 🛠️ Tahap 1: Persiapan Linux (Wajib!)
+Before running the script, ensure your Linux machine does not "sleep" and has an active VNC Server.
 
-Sebelum menjalankan script, pastikan Linux kamu tidak "tertidur" dan memiliki VNC Server yang aktif.
+### 1. Disable Sleep (Anti-Sleep)
 
-### 1. Matikan Sleep (Anti-Sleep)
+To prevent the server from turning off when the laptop lid is closed or left idle:
 
-Agar server tidak mati saat laptop ditutup atau didiamkan:
-
-1.  Buka Terminal.
-2.  Jalankan perintah ini untuk mematikan fitur sleep secara total:
-    ```bash
-    sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
-    ```
-    _(Untuk mengembalikan: ganti `mask` dengan `unmask`)_.
-
-### 2. Setup VNC Server (Untuk GUI)
-
-Script installer nanti membutuhkan VNC Server yang berjalan di port **5900**. Kita gunakan **x11vnc** karena paling ringan dan kompatibel untuk menampilkan layar asli.
-
-1.  Install x11vnc:
-    ```bash
-    sudo apt update
-    sudo apt install x11vnc -y
-    ```
-2.  Buat password VNC:
-    ```bash
-    x11vnc -storepasswd
-    # Masukkan password, lalu pilih 'y' untuk simpan di /home/user/.vnc/passwd
-    ```
-3.  Jalankan VNC di background (Sementara):
-    ```bash
-    x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth ~/.vnc/passwd -rfbport 5900 -shared &
-    ```
-
-> **Catatan Wayland:** Jika kamu pakai Ubuntu 22.04+ (Wayland), disarankan Logout dan pilih **"Ubuntu on Xorg"** saat Login agar x11vnc berjalan lancar.
-
-<br>
-
-## ☁️ Tahap 2: Setup Cloudflare Tunnel
-
-Kita menggunakan Cloudflare agar tidak perlu open port router.
-
-1.  Login ke **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
-2.  Create Tunnel -> Pilih **Cloudflared**.
-3.  Simpan **Token** (kode panjang dimulai dengan `eyJhIjoi...`).
-4.  Di tab **Public Hostname**, tambahkan 2 Jalur:
-
-| Subdomain | Domain         | Service Type | URL              | Fungsi                    |
-| :-------- | :------------- | :----------- | :--------------- | :------------------------ |
-| `display` | `domainmu.com` | **HTTP**     | `localhost:6080` | Akses Layar Desktop (Web) |
-| `linux`   | `domainmu.com` | **SSH**      | `localhost:22`   | Akses Terminal SSH        |
-
-> **Info:** Linux menggunakan port SSH standar (**22**). Pastikan service type di Cloudflare mengarah ke `localhost:22`.
-
-<br>
-
-## 🚀 Tahap 3: Instalasi
-
-Script ini akan menginstall semua kebutuhan server dan membuat Service Systemd agar server menyala otomatis saat booting.
-
-### 1. Jalankan Installer
-
-Buka terminal di folder `linux`, lalu jalankan:
+1. Open Terminal.
+2. Run this command to completely mask sleep features:
 
 ```bash
-# Berikan izin eksekusi
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+
+```
+
+_(To revert: replace `mask` with `unmask`)_.
+
+### 2. Setup VNC Server (For GUI)
+
+The installer script requires a VNC Server running on port **5900**. We use **x11vnc** because it is lightweight and compatible with displaying the actual screen.
+
+1. Install x11vnc:
+
+```bash
+sudo apt update
+sudo apt install x11vnc -y
+
+```
+
+2. Create a VNC password:
+
+```bash
+x11vnc -storepasswd
+# Enter password, then type 'y' to save in /home/user/.vnc/passwd
+
+```
+
+3. Run VNC in the background (Temporarily):
+
+```bash
+x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth ~/.vnc/passwd -rfbport 5900 -shared &
+
+```
+
+> **Wayland Note:** If you are using Ubuntu 22.04+ (Wayland), it is recommended to Logout and select **"Ubuntu on Xorg"** during Login for x11vnc to run smoothly.
+
+## ☁️ Phase 2: Cloudflare Tunnel Setup
+
+We use Cloudflare so we don't need to open router ports.
+
+1. Login to **Cloudflare Zero Trust Dashboard** > **Networks** > **Tunnels**.
+2. Create Tunnel -> Select **Cloudflared**.
+3. Save the **Token** (long code starting with `eyJhIjoi...`).
+4. In the **Public Hostname** tab, add 2 Routes:
+
+| Subdomain | Domain           | Service Type | URL              | Function                    |
+| --------- | ---------------- | ------------ | ---------------- | --------------------------- |
+| `display` | `yourdomain.com` | **HTTP**     | `localhost:6080` | Desktop Screen Access (Web) |
+| `linux`   | `yourdomain.com` | **SSH**      | `localhost:22`   | SSH Terminal Access         |
+
+> **Info:** Linux uses the standard SSH port (**22**). Ensure the Cloudflare service type points to `localhost:22`.
+
+## 🚀 Phase 3: Installation
+
+This script will install all server requirements and create Systemd Services so the server starts automatically on boot.
+
+### 1. Run the Installer
+
+Open a terminal in the `linux` folder, then run:
+
+```bash
+# Grant execution permission
 chmod +x install.sh
 
-# Jalankan sebagai ROOT (Wajib)
+# Run as ROOT (Mandatory)
 sudo ./install.sh
 
 ```
 
 ### 2. Input Token
 
-Script akan meminta **Token Cloudflare**.
+The script will ask for the **Cloudflare Token**.
 
-- Copy token dari dashboard Cloudflare.
-- Paste di terminal (Klik Kanan -> Paste), lalu Enter.
+- Copy the token from the Cloudflare dashboard.
+- Paste it into the terminal (Right Click -> Paste), then Enter.
 
-### Apa yang dilakukan `install.sh`?
+### What does `install.sh` do?
 
-Script ini adalah **SETUP OTOMATIS** yang melakukan:
+This script is an **AUTOMATED SETUP** that performs:
 
-1. **[1/5] Install Tools:** Menginstall `git`, `python3-venv`, `wget`.
-2. **[2/5] Install Cloudflared:** Download binary resmi Cloudflare untuk Linux (`deb`).
+1. **[1/5] Install Tools:** Installs `git`, `python3-venv`, `wget`.
+2. **[2/5] Install Cloudflared:** Downloads the official Cloudflare binary for Linux (`deb`).
 3. **[3/5] Setup Environment:**
 
-- Membuat folder `/opt/serverlab`.
-- Membuat Python Virtual Environment (`venv`).
-- Install `websockify` dan clone `noVNC`.
+- Creates the `/opt/serverlab` folder.
+- Creates a Python Virtual Environment (`venv`).
+- Installs `websockify` and clones `noVNC`.
 
 4. **[4/5] Setup Systemd Service:**
 
-- Membuat `myserver-tunnel.service` (Jalan otomatis saat boot).
-- Membuat `myserver-display.service` (Jalan otomatis saat boot).
+- Creates `myserver-tunnel.service` (Runs automatically on boot).
+- Creates `myserver-display.service` (Runs automatically on boot).
 
-5. **[5/5] Start Services:** Menyalakan semua layanan detik itu juga.
+5. **[5/5] Start Services:** Starts all services immediately.
 
-### Apa yang dilakukan `update.sh`?
+### What does `update.sh` do?
 
-Script ini untuk maintenance:
+This script is for maintenance:
 
-1. Update sistem Linux (`apt update & upgrade`).
-2. Update `cloudflared` ke versi terbaru.
-3. Restart service systemd agar perubahan diterapkan.
+1. Updates the Linux system (`apt update & upgrade`).
+2. Updates `cloudflared` to the latest version.
+3. Restarts systemd services to apply changes.
 
-### Apa yang dilakukan `uninstall.sh`?
+### What does `uninstall.sh` do?
 
-Script ini menghapus server Linux secara bersih:
+This script completely removes the Linux server setup:
 
-1. Stop dan disable service systemd (`myserver-tunnel`, `myserver-display`).
-2. Hapus file service di `/etc/systemd/system/` lalu `daemon-reload`.
-3. Hapus folder `/opt/serverlab` dan config `/etc/cloudflared`.
-4. _(Opsional)_ Uninstall paket `cloudflared` via `apt remove`.
+1. Stops and disables systemd services (`myserver-tunnel`, `myserver-display`).
+2. Removes service files in `/etc/systemd/system/` then runs `daemon-reload`.
+3. Removes the `/opt/serverlab` folder and `/etc/cloudflared` config.
+4. _(Optional)_ Uninstalls the `cloudflared` package via `apt remove`.
 
-## ▶️ Cara Menjalankan Server
+## ▶️ How to Run the Server
 
-### Otomatis (Systemd)
+### Automatic (Systemd)
 
-Karena kita menggunakan Systemd, server akan **SELALU NYALA** setiap kali laptop/PC dinyalakan. Kamu tidak perlu menjalankan script manual.
+Since we are using Systemd, the server will **ALWAYS BE ON** whenever the laptop/PC is turned on. You do not need to run the script manually.
 
-### Kontrol Manual
+### Manual Control
 
-Jika kamu ingin mematikan/menyalakan server secara manual:
+If you want to turn the server off/on manually:
 
 ```bash
-# Cek Status
+# Check Status
 sudo systemctl status myserver-tunnel
 sudo systemctl status myserver-display
 
-# Matikan Server
+# Stop Server
 sudo systemctl stop myserver-tunnel myserver-display
 
-# Nyalakan Server
+# Start Server
 sudo systemctl start myserver-tunnel myserver-display
 
 ```
 
-### Uninstall (Hapus Total)
+### Uninstall (Total Wipe)
 
-Jika ingin menghapus semua komponen server:
+If you want to remove all server components:
 
 ```bash
 sudo ./uninstall.sh
+
 ```
 
-## 🖥️ Cara Akses (Client Side)
+## 🖥️ Access Method (Client Side)
 
-### A. Akses Layar (Web VNC)
+### A. Screen Access (Web VNC)
 
-Buka browser di HP/Laptop lain, akses:
-👉 `https://display.domainmu.com`
+Open a browser on another Phone/Laptop, access:
+👉 `https://display.yourdomain.com`
 
-- Klik **Display**.
-- Masukkan Password yang kamu buat saat setup `x11vnc` tadi.
+- Click **Display**.
+- Enter the Password you created during the `x11vnc` setup earlier.
 
-### B. Akses Terminal (VS Code Remote SSH)
+### B. Terminal Access (VS Code Remote SSH)
 
-1. Pastikan Laptop Client sudah terinstall **cloudflared**.
-2. Edit config SSH (`~/.ssh/config`):
+1. Ensure the Client Laptop has **cloudflared** installed.
+2. Edit SSH config (`~/.ssh/config`):
 
 ```text
 Host my-linux
-    HostName linux.domainmu.com
-    User nama_user_linuxmu   # Contoh: root / ubuntu / kali
+    HostName linux.yourdomain.com
+    User your_linux_username   # Example: root / ubuntu / kali
     Port 22
     ProxyCommand cloudflared access ssh --hostname %h
 
@@ -185,61 +191,61 @@ Host my-linux
 3. **Connect:**
 
 - `ssh my-linux`
-- Masukkan password user Linux kamu.
+- Enter your Linux user password.
 
-## 📝 Penjelasan Kode (Under the Hood)
+## 📝 Code Explanation (Under the Hood)
 
-### Struktur File Project
+### Project File Structure
 
 ```
 zero-to-server/
 ├── linux/
-│   ├── install.sh         (Setup awal & Systemd Generator)
-│   ├── update.sh          (Update System & Cloudflared)
-│   ├── uninstall.sh       (Hapus Service & File)
-│   └── readme.md          (Dokumentasi)
+│   ├── install.sh         (Initial Setup & Systemd Generator)
+│   ├── update.sh          (System & Cloudflared Update)
+│   ├── uninstall.sh       (Remove Service & Files)
+│   └── readme.md          (Documentation)
 
 ```
 
-**Lokasi Instalasi (Di dalam Linux):**
+**Installation Location (Inside Linux):**
 
-- `/opt/serverlab/` : Folder utama project (noVNC, venv).
-- `/etc/systemd/system/myserver-*.service` : File konfigurasi auto-start.
-- `/usr/bin/cloudflared` : Aplikasi Tunnel.
+- `/opt/serverlab/` : Main project folder (noVNC, venv).
+- `/etc/systemd/system/myserver-*.service` : Auto-start configuration files.
+- `/usr/bin/cloudflared` : Tunnel Application.
 
-### Struktur Systemd Service
+### Systemd Service Structure
 
-Kami membuat 2 "robot" penjaga server:
+We create 2 "robots" to guard the server:
 
 1. **`myserver-tunnel.service`**
 
-- Tugas: Menjaga koneksi Cloudflare Tunnel agar tidak putus.
+- Task: Maintains Cloudflare Tunnel connection so it doesn't drop.
 - Command: `cloudflared tunnel run --token [TOKEN]`
-- Restart: `Always` (Jika crash, langsung nyala lagi).
+- Restart: `Always` (If it crashes, it restarts immediately).
 
 2. **`myserver-display.service`**
 
-- Tugas: Menjalankan jembatan Web-ke-VNC.
+- Task: Runs the Web-to-VNC bridge.
 - Command: `python3 websockify --web noVNC 6080 localhost:5900`
 - Restart: `Always`.
 
 ## ⚠️ Troubleshooting
 
-| Error                        | Penyebab                | Solusi                                                                                         |
-| ---------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| **Layar Hitam / Blank**      | Wayland Protocol        | Logout Ubuntu, klik gear ⚙️ di pojok kanan bawah, pilih **"Ubuntu on Xorg"**, lalu login lagi. |
-| **"Failed to bind to port"** | Port 5900/6080 terpakai | Cek `sudo netstat -tulpn`. Matikan service lain yg memakai port tersebut.                      |
-| **SSH Permission Denied**    | Login root dimatikan    | Edit `/etc/ssh/sshd_config`, set `PermitRootLogin yes`, lalu `sudo service ssh restart`.       |
-| **Cloudflare Error**         | Token salah / Expired   | Uninstall (`sudo ./uninstall.sh`) lalu Install ulang dengan token baru.                        |
+| Error                        | Cause                 | Solution                                                                                                       |
+| ---------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Black / Blank Screen**     | Wayland Protocol      | Logout of Ubuntu, click the gear ⚙️ in the bottom right corner, select **"Ubuntu on Xorg"**, then login again. |
+| **"Failed to bind to port"** | Port 5900/6080 in use | Check `sudo netstat -tulpn`. Kill other services using those ports.                                            |
+| **SSH Permission Denied**    | Root login disabled   | Edit `/etc/ssh/sshd_config`, set `PermitRootLogin yes`, then `sudo service ssh restart`.                       |
+| **Cloudflare Error**         | Wrong / Expired Token | Uninstall (`sudo ./uninstall.sh`) then Reinstall with a new token.                                             |
 
 ---
 
-## 📊 Rangkuman Setup & File
+## 📊 Setup & File Summary
 
 ### Script Flow
 
 ```
-SETUP AWAL (SEKALI):
+INITIAL SETUP (ONCE):
 ./install.sh
     ├─ [1/5] Install Tools
     ├─ [2/5] Install Cloudflared
@@ -249,8 +255,8 @@ SETUP AWAL (SEKALI):
 
 NORMAL OPERATION (AUTO):
 Systemd (Background Service)
-    ├─ myserver-tunnel.service (Jaga Koneksi)
-    └─ myserver-display.service (Jaga GUI)
+    ├─ myserver-tunnel.service (Maintain Connection)
+    └─ myserver-display.service (Maintain GUI)
 
 MAINTENANCE:
 ./update.sh
@@ -277,15 +283,15 @@ MAINTENANCE:
 
 - **Host:** Ubuntu / Debian / Kali Linux / Mint.
 - **Service Manager:** Systemd (Standard Linux).
-- **VNC Server:** x11vnc (Disarankan) atau Tigervnc.
+- **VNC Server:** x11vnc (Recommended) or Tigervnc.
 - **SSH Server:** OpenSSH Server.
 
-### Tools yang Digunakan
+### Tools Used
 
-- **Systemd:** Service manager bawaan Linux. Kita menggunakannya agar server otomatis nyala saat booting (Auto-Start) dan restart jika crash.
-- **x11vnc:** Server VNC untuk sistem X Window (X11). Dipilih karena bisa menampilkan **Layar Fisik** yang sedang aktif, bukan membuat sesi virtual baru.
-- **noVNC:** HTML5 VNC Client. Memungkinkan akses remote desktop langsung dari browser.
-- **Websockify:** Jembatan (Bridge) yang menerjemahkan koneksi TCP (VNC) menjadi WebSocket agar bisa dibaca browser.
-- **Cloudflared:** Daemon resmi Cloudflare untuk membuat tunnel terenkripsi tanpa membuka port router.
-- **OpenSSH Server:** Standar industri untuk akses remote terminal yang aman.
-- **Python venv:** Virtual Environment untuk mengisolasi instalasi library Python project ini dari sistem utama.
+- **Systemd:** Native Linux service manager. We use it so the server starts automatically on boot (Auto-Start) and restarts if it crashes.
+- **x11vnc:** VNC Server for X Window systems (X11). Chosen because it can display the **Physical Screen** that is currently active, rather than creating a new virtual session.
+- **noVNC:** HTML5 VNC Client. Allows remote desktop access directly from a browser.
+- **Websockify:** A bridge that translates TCP connections (VNC) into WebSockets so they can be read by a browser.
+- **Cloudflared:** Official Cloudflare daemon to create encrypted tunnels without opening router ports.
+- **OpenSSH Server:** Industry standard for secure remote terminal access.
+- **Python venv:** Virtual Environment to isolate this project's Python library installation from the main system.

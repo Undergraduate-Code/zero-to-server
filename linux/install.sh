@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Creator : BrotherZhafif
 # Maintainer :
 
@@ -10,7 +11,7 @@ echo "[1/5] Update & Install Tools..."
 apt update && apt upgrade -y
 apt install git wget curl python3 python3-pip python3-venv -y
 
-echo "[2/5] Install Cloudflared..."
+echo "[2/5] Installing Cloudflared..."
 if ! command -v cloudflared &> /dev/null; then
     ARCH=$(dpkg --print-architecture)
     wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}.deb
@@ -37,7 +38,7 @@ h1{color:#58a6ff}a{background:#238636;color:white;padding:10px 20px;text-decorat
 EOF
 
 echo ""
-read -p "Paste Token Cloudflare: " TOKEN
+read -p "Paste Cloudflare Token: " TOKEN
 
 echo "[4/5] Setup Systemd Service (Auto-Start)..."
 # Service Tunnel
@@ -66,9 +67,9 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-echo "[5/5] Menyalakan Service..."
+echo "[5/5] Starting Services..."
 systemctl daemon-reload
 systemctl enable myserver-tunnel myserver-display
 systemctl start myserver-tunnel myserver-display
 
-echo "✅ SELESAI! Server otomatis nyala saat booting."
+echo "✅ DONE! Server automatically starts on boot."
