@@ -118,6 +118,15 @@ Script ini untuk maintenance:
 2. Update `cloudflared` ke versi terbaru.
 3. Restart service systemd agar perubahan diterapkan.
 
+### Apa yang dilakukan `uninstall.sh`?
+
+Script ini menghapus server Linux secara bersih:
+
+1. Stop dan disable service systemd (`myserver-tunnel`, `myserver-display`).
+2. Hapus file service di `/etc/systemd/system/` lalu `daemon-reload`.
+3. Hapus folder `/opt/serverlab` dan config `/etc/cloudflared`.
+4. _(Opsional)_ Uninstall paket `cloudflared` via `apt remove`.
+
 ## ▶️ Cara Menjalankan Server
 
 ### Otomatis (Systemd)
@@ -139,6 +148,14 @@ sudo systemctl stop myserver-tunnel myserver-display
 # Nyalakan Server
 sudo systemctl start myserver-tunnel myserver-display
 
+```
+
+### Uninstall (Hapus Total)
+
+Jika ingin menghapus semua komponen server:
+
+```bash
+sudo ./uninstall.sh
 ```
 
 ## 🖥️ Cara Akses (Client Side)

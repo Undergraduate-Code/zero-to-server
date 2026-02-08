@@ -99,6 +99,15 @@ Script `update.ps1` adalah untuk **UPDATE SISTEM** (bukan setup awal).
 3.  **[3/3] Update Ubuntu WSL** - Masuk ke Ubuntu dan jalankan `apt update && apt upgrade`.
 4.  **[4/3] Restart Server** - Menyalakan kembali `start_server.bat`.
 
+### Apa yang dilakukan `uninstall.ps1`?
+
+Script `uninstall.ps1` digunakan untuk **membersihkan total** instalasi Windows.
+
+1.  Mematikan semua proses server (cloudflared, TightVNC, websockify, SSH).
+2.  Menghapus **Ubuntu WSL** (semua data Linux akan hilang).
+3.  Menghapus folder `C:\ServerLab`.
+4.  _(Opsional)_ Uninstall aplikasi `cloudflared` dan `tightvnc` via Chocolatey.
+
 <br>
 
 ## ▶️ Cara Menjalankan Server
@@ -117,6 +126,14 @@ Jika ingin update sistem sekalian nyalakan server:
 
 1.  Klik kanan `update.ps1` di folder project.
 2.  Run with PowerShell.
+
+### Uninstall (Hapus Total)
+
+Jika ingin menghapus semua komponen server:
+
+1.  Klik kanan `uninstall.ps1`.
+2.  Run with PowerShell **sebagai Administrator**.
+3.  Ketik `HAPUS` saat konfirmasi.
 
 ---
 

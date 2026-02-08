@@ -146,6 +146,15 @@ Script `update.sh` adalah untuk **UPDATE SISTEM** (bukan setup awal). Script ini
 - Ada update security Ubuntu
 - Server error dan perlu re-start dengan clean
 
+### Apa yang dilakukan `uninstall.sh`?
+
+Script ini menghapus server Android secara bersih:
+
+1. Mematikan semua proses (cloudflared, nginx, sshd, noVNC, proot).
+2. Menghapus Ubuntu Proot-Distro dan cache.
+3. Menghapus file server (`noVNC/`, `server.sh`, konfigurasi nginx, dan token Cloudflare lokal).
+4. Membersihkan SSH known_hosts agar koneksi baru tidak bentrok.
+
 ---
 
 ### Script `server.sh` (PENJELASAN DETAIL)
@@ -236,7 +245,7 @@ nohup cloudflared tunnel run --token $TOKEN > tunnel.log 2>&1 &
 
 <br>
 
-## � Cara Menjalankan Server
+## ▶️ Cara Menjalankan Server
 
 ### Startup Pertama Kali
 
@@ -261,6 +270,15 @@ Cukup jalankan `server.sh` yang sudah di-generate:
 
 ```bash
 ./server.sh
+```
+
+### Uninstall (Hapus Total)
+
+Jika ingin menghapus semua komponen server:
+
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
 ```
 
 Atau jika mau update system:
@@ -333,6 +351,7 @@ zero-to-server/
 ├── android/
 │   ├── install.sh         (Setup awal - JALANKAN SEKALI)
 │   ├── update.sh          (Update sistem - JALANKAN BERKALA)
+│   ├── uninstall.sh       (Hapus server & Ubuntu Proot)
 │   ├── readme.md          (Dokumentasi Android)
 │   └── server.sh          (GENERATED - Startup script)
 ├── windows/

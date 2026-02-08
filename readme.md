@@ -1,4 +1,5 @@
 # 🌐 Zero to Server
+
 > **Turn any device into a accessible Cloud Server (Android, Windows, Linux).**
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
@@ -12,12 +13,13 @@ Project ini bertujuan untuk mendemokratisasi akses server. Kami percaya bahwa se
 Inti dari project ini adalah mengubah device lokal menjadi server yang bisa diakses dari mana saja via internet dengan aman dan mudah.
 
 ### 🛠️ The Tech Stack (Core)
-Kami menggunakan kombinasi teknologi *open-source* yang powerful untuk menembus batasan jaringan (CGNAT) tanpa perlu IP Public statis:
 
-* **☁️ Cloudflare Tunnel:** Mengekspos server lokal ke internet secara aman (tanpa Open Port di router).
-* **💻 SSH (Secure Shell):** Akses penuh ke terminal server untuk coding, remote config, dan manajemen file (Backend).
-* **🖥️ VNC (Virtual Network Computing):** Akses visual/layar desktop dari device server via browser (Frontend/GUI).
-* **🔧 Nginx:** Reverse proxy untuk mengatur lalu lintas antara Cloudflare, VNC, dan Localhost.
+Kami menggunakan kombinasi teknologi _open-source_ yang powerful untuk menembus batasan jaringan (CGNAT) tanpa perlu IP Public statis:
+
+- **☁️ Cloudflare Tunnel:** Mengekspos server lokal ke internet secara aman (tanpa Open Port di router).
+- **💻 SSH (Secure Shell):** Akses penuh ke terminal server untuk coding, remote config, dan manajemen file (Backend).
+- **🖥️ VNC (Virtual Network Computing):** Akses visual/layar desktop dari device server via browser (Frontend/GUI).
+- **🔧 Nginx:** Reverse proxy untuk mengatur lalu lintas antara Cloudflare, VNC, dan Localhost.
 
 <br>
 
@@ -26,9 +28,10 @@ Kami menggunakan kombinasi teknologi *open-source* yang powerful untuk menembus 
 > **Project ini dibuat untuk tujuan EDUKASI dan PEMBELAJARAN.**
 
 Project ini dikembangkan oleh mahasiswa sebagai sarana riset infrastruktur jaringan. Harap perhatikan hal berikut:
-1.  **Keamanan:** Konfigurasi keamanan di sini adalah *standard practice* untuk hobi/dev, bukan *enterprise-grade*. Jangan gunakan untuk menyimpan data perbankan, *production database* krusial, atau rahasia negara. **Use at your own risk.**
+
+1.  **Keamanan:** Konfigurasi keamanan di sini adalah _standard practice_ untuk hobi/dev, bukan _enterprise-grade_. Jangan gunakan untuk menyimpan data perbankan, _production database_ krusial, atau rahasia negara. **Use at your own risk.**
 2.  **Stabilitas:** Performa server sangat bergantung pada spesifikasi device dan koneksi internet rumah kamu.
-3.  **Riset Lanjutan:** Pengguna sangat disarankan untuk meriset lebih lanjut mengenai *firewall*, *SSH Key hardening*, dan manajemen *token* agar server lebih aman.
+3.  **Riset Lanjutan:** Pengguna sangat disarankan untuk meriset lebih lanjut mengenai _firewall_, _SSH Key hardening_, dan manajemen _token_ agar server lebih aman.
 
 <br>
 
@@ -37,34 +40,40 @@ Project ini dikembangkan oleh mahasiswa sebagai sarana riset infrastruktur jarin
 Pilih sistem operasi device yang ingin kamu jadikan server:
 
 ### 1. 🤖 Android Server (Termux)
+
 > **Status:** ✅ **FIRST RELEASE (Stable)**
 
 Mengubah HP Android menjadi Linux Server mini yang powerful. Sangat hemat daya (bisa pakai HP layar pecah sekalipun).
-* **Base:** Termux & Proot-Distro.
-* **Features:** Akses layar HP via Browser (noVNC), Full Terminal SSH via VS Code, Auto-Install Script.
-* **Cocok untuk:** Hosting bot WA/Discord, Web Server ringan, Belajar Linux.
+
+- **Base:** Termux & Proot-Distro.
+- **Features:** Akses layar HP via Browser (noVNC), Full Terminal SSH via VS Code, Auto-Install Script.
+- **Cocok untuk:** Hosting bot WA/Discord, Web Server ringan, Belajar Linux.
 
 👉 **[Buka Panduan Android Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/android)**
 
 ### 2. 🪟 Windows Server
-> **Status:** 🚧 **In Development (Coming Soon)**
+
+> **Status:** 🧪 **Beta (Active Development)**
 
 Memanfaatkan laptop/PC Windows sebagai server tanpa perlu dual-boot.
-* **Base:** PowerShell / WSL (Windows Subsystem for Linux).
-* **Features:** Remote Desktop via Browser, PowerShell SSH access.
-* **Cocok untuk:** Server Game (Minecraft/SAMP), Media Server (Plex), Heavy processing.
 
-👉 *Link akan tersedia segera...*
+- **Base:** PowerShell / WSL (Windows Subsystem for Linux).
+- **Features:** Remote Desktop via Browser, PowerShell SSH access.
+- **Cocok untuk:** Server Game (Minecraft/SAMP), Media Server (Plex), Heavy processing.
+
+👉 **[Buka Panduan Windows Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/windows)**
 
 ### 3. 🐧 Linux Server (Ubuntu/Debian)
-> **Status:** 🚧 **In Development (Coming Soon)**
+
+> **Status:** 🧪 **Beta (Active Development)**
 
 Setup klasik untuk device seperti Raspberry Pi, STB Bekas, atau Mini PC.
-* **Base:** Systemd Services.
-* **Features:** Full Automation, Docker Support, Hardened Security.
-* **Cocok untuk:** Home Lab, Docker Container, Home Assistant.
 
-👉 *Link akan tersedia segera...*
+- **Base:** Systemd Services.
+- **Features:** Full Automation, Docker Support, Hardened Security.
+- **Cocok untuk:** Home Lab, Docker Container, Home Assistant.
+
+👉 **[Buka Panduan Linux Setup](https://github.com/brotherzhafif/zero-to-server/tree/main/linux)**
 
 <br>
 
