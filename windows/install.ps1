@@ -6,10 +6,43 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Assert-CommandExists {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+        throw "Required command not found: $Name"
+    }
+}
+
+function Assert-Preflight {
+    Write-Host "[Preflight] Running strict checks..." -ForegroundColor Cyan
+
+    Assert-CommandExists -Name "dism.exe"
+    Assert-CommandExists -Name "wsl"
+
+    $systemDrive = Get-PSDrive -Name C -ErrorAction Stop
+    if ($systemDrive.Free -lt 5GB) {
+        throw "At least 5 GB free space on C: is required."
+    }
+
+    $netOk = Test-Connection -ComputerName "github.com" -Count 1 -Quiet
+    if (-not $netOk) {
+        throw "No internet access detected (github.com unreachable)."
+    }
+
+    $existing6080 = Get-NetTCPConnection -State Listen -LocalPort 6080 -ErrorAction SilentlyContinue
+    if ($existing6080) {
+        throw "Port 6080 is already in use. Stop conflicting service before install."
+    }
+
+    Write-Host "[Preflight] OK" -ForegroundColor Green
+}
+
 # 1. CHECK ADMIN
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "⚠️  MUST RUN AS ADMINISTRATOR!" -ForegroundColor Red; Start-Sleep 3; Exit
 }
+
+Assert-Preflight
 
 Clear-Host
 Write-Host "=========================================" -ForegroundColor Cyan
@@ -72,7 +105,7 @@ Set-Content -Path "$Path\setup_wsl_internal.sh" -Value $WSLScript
 # 6. SETUP DISPLAY (noVNC)
 Write-Host "[5/7] Preparing Web Display..." -ForegroundColor Green
 if (!(Test-Path "noVNC")) { git clone --depth 1 https://github.com/novnc/noVNC.git }
-pip install websockify
+python -m pip install --upgrade websockify
 
 $HTML = @"
 <!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Server Lab</title>
@@ -94,34 +127,63 @@ $EncryptedToken = ConvertFrom-SecureString $SecureToken
 Set-Content -Path "$Path\secrets\cloudflared.token.enc" -Value $EncryptedToken
 
 # FIX: Use 127.0.0.1 to avoid Loopback Restriction
-$LauncherPs1 = @"
+$LauncherPs1 = @'
 Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
+function Assert-StartPreflight {
+    if (!(Test-Path "C:\ServerLab\noVNC")) {
+        throw "Missing C:\ServerLab\noVNC folder. Re-run install.ps1."
+    }
 
-$TokenFile = 'C:\ServerLab\secrets\cloudflared.token.enc'
-if (!(Test-Path $TokenFile)) {
-    Write-Host 'Missing token file. Run install.ps1 again.' -ForegroundColor Red
-    exit 1
+    if (!(Test-Path "C:\ServerLab\secrets\cloudflared.token.enc")) {
+        throw "Missing encrypted token file. Re-run install.ps1."
+    }
+
+    $existing6080 = Get-NetTCPConnection -State Listen -LocalPort 6080 -ErrorAction SilentlyContinue
+    if ($existing6080) {
+        throw "Port 6080 is already in use. Stop conflicting service before start."
+    }
 }
 
+Assert-StartPreflight
+
+$TokenFile = "C:\ServerLab\secrets\cloudflared.token.enc"
 $SecureToken = Get-Content -Path $TokenFile | ConvertTo-SecureString
 $TokenPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureToken)
-$Token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($TokenPtr)
 
-Write-Host '==========================================' -ForegroundColor Cyan
-Write-Host '   STARTING ALL SERVICES...' -ForegroundColor Cyan
-Write-Host '==========================================' -ForegroundColor Cyan
+try {
+    $Token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($TokenPtr)
 
-Write-Host '[+] Starting Cloudflare...'
-Start-Process -WindowStyle Hidden -FilePath 'cloudflared' -ArgumentList @('tunnel', 'run', '--token', $Token)
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "   STARTING ALL SERVICES..." -ForegroundColor Cyan
+    Write-Host "==========================================" -ForegroundColor Cyan
 
-Write-Host '[+] Starting Web Display...'
-Start-Process -WindowStyle Hidden -FilePath 'python' -ArgumentList @('-m', 'websockify', '--web', 'C:\ServerLab\noVNC', '6080', '127.0.0.1:5900')
+    Write-Host "[+] Starting Cloudflare..."
+    Start-Process -WindowStyle Hidden -FilePath "cloudflared" -ArgumentList @("tunnel", "run", "--token", $Token)
 
-Write-Host '[+] Starting Ubuntu SSH...'
-wsl -d Ubuntu -- sudo /usr/sbin/sshd -D
-"@
+    Write-Host "[+] Starting Web Display..."
+    Start-Process -WindowStyle Hidden -FilePath "python" -ArgumentList @("-m", "websockify", "--web", "C:\ServerLab\noVNC", "6080", "127.0.0.1:5900")
+
+    Write-Host "[+] Starting Ubuntu SSH..."
+    Start-Process -WindowStyle Hidden -FilePath "wsl" -ArgumentList @("-d", "Ubuntu", "--", "sudo", "/usr/sbin/sshd", "-D")
+
+    if (Test-Path "C:\ServerLab\health_check.ps1") {
+        powershell -NoProfile -ExecutionPolicy Bypass -File "C:\ServerLab\health_check.ps1"
+    }
+}
+finally {
+    if ($TokenPtr -ne [IntPtr]::Zero) {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($TokenPtr)
+    }
+}
+'@
 Set-Content -Path "$Path\start_server.ps1" -Value $LauncherPs1
+
+$HealthCheckSource = Join-Path $PSScriptRoot "health-check.ps1"
+if (Test-Path $HealthCheckSource) {
+    Copy-Item -Path $HealthCheckSource -Destination "$Path\health_check.ps1" -Force
+}
 
 $Bat = @"
 @echo off
@@ -156,3 +218,4 @@ Write-Host "1. RESTART Laptop now."
 Write-Host "2. Open Folder C:\ServerLab."
 Write-Host "3. Right Click -> Open Terminal -> Type: wsl -d Ubuntu -- bash setup_wsl_internal.sh"
 Write-Host "4. Run start_server.ps1 (or start_server.bat wrapper)"
+Write-Host "5. Run health_check.ps1 to verify service status anytime"

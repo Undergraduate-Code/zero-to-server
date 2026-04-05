@@ -2,6 +2,50 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+require_cmd() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo -e "${RED}❌ Missing required command: $cmd${NC}"
+        exit 1
+    fi
+}
+
+preflight_install() {
+    echo -e "${BLUE}[Preflight] Running strict checks...${NC}"
+
+    require_cmd pkg
+    require_cmd proot-distro
+    require_cmd git
+
+    if command -v getent >/dev/null 2>&1; then
+        if ! getent hosts github.com >/dev/null 2>&1; then
+            echo -e "${RED}❌ DNS/internet check failed (github.com unreachable).${NC}"
+            exit 1
+        fi
+    else
+        if ! ping -c 1 github.com >/dev/null 2>&1; then
+            echo -e "${RED}❌ Internet check failed (github.com unreachable).${NC}"
+            exit 1
+        fi
+    fi
+
+    if [ -z "${PREFIX:-}" ] || [ ! -d "${PREFIX}" ]; then
+        echo -e "${RED}❌ PREFIX is invalid. Run inside Termux.${NC}"
+        exit 1
+    fi
+
+    if command -v ss >/dev/null 2>&1; then
+        if ss -ltn | awk '{print $4}' | grep -qE '(:|\.)8080$'; then
+            echo -e "${RED}❌ Port 8080 is already in use.${NC}"
+            exit 1
+        fi
+    fi
+
+    echo -e "${GREEN}[Preflight] OK${NC}"
+}
+
 # Creator : BrotherZhafif
 # Maintainer :
 
@@ -18,6 +62,8 @@ echo -e "${BLUE}===============================================${NC}"
 echo -e "${BLUE}   AUTO-INSTALLER ANDROID SERVER (ALL-IN-ONE)  ${NC}"
 echo -e "${BLUE}===============================================${NC}"
 echo ""
+
+preflight_install
 
 # 1. CLEAN UP ENVIRONMENT
 echo -e "${GREEN}[1/7] Cleaning up old files & processes...${NC}"
@@ -184,14 +230,45 @@ cat <<EOF > server.sh
 set -euo pipefail
 
 TOKEN_FILE="\$HOME/.config/zero-to-server/cloudflared.token"
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
+
+require_cmd() {
+    local cmd="\$1"
+    if ! command -v "\$cmd" >/dev/null 2>&1; then
+        echo -e "\${RED}❌ Missing required command: \$cmd\${NC}"
+        exit 1
+    fi
+}
+
+preflight_start() {
+    echo -e "\${BLUE}[Preflight] Checking startup prerequisites...\${NC}"
+    require_cmd cloudflared
+    require_cmd nginx
+    require_cmd proot-distro
+
+    if [ ! -s "\$TOKEN_FILE" ]; then
+        echo -e "\${RED}❌ Cloudflare token file missing/empty: \$TOKEN_FILE\${NC}"
+        exit 1
+    fi
+
+    if [ ! -d "\$SCRIPT_DIR/noVNC" ]; then
+        echo -e "\${RED}❌ noVNC folder not found in \$SCRIPT_DIR\${NC}"
+        exit 1
+    fi
+
+    echo -e "\${GREEN}[Preflight] OK\${NC}"
+}
 
 echo -e "\${BLUE}=========================================\${NC}"
 echo -e "\${BLUE}        ANDROID SERVER - ONLINE          \${NC}"
 echo -e "\${BLUE}=========================================\${NC}"
+
+preflight_start
 
 termux-wake-lock
 
@@ -233,6 +310,10 @@ if [ -s "\$TOKEN_FILE" ]; then
 else
     echo "❌ ERROR: Cloudflare token file missing/empty: \$TOKEN_FILE"
 fi
+
+if [ -f "\$SCRIPT_DIR/health-check.sh" ]; then
+    bash "\$SCRIPT_DIR/health-check.sh"
+fi
 EOF
 
 chmod +x server.sh
@@ -240,3 +321,7 @@ chmod +x server.sh
 echo ""
 echo -e "${BLUE}✅ INSTALLATION COMPLETE! ${NC}"
 echo "Run server with: ./server.sh"
+
+if [ -f "$SCRIPT_DIR/health-check.sh" ]; then
+    bash "$SCRIPT_DIR/health-check.sh" || true
+fi

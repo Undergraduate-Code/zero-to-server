@@ -2,6 +2,30 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+require_cmd() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo -e "${RED}❌ Missing required command: $cmd${NC}"
+        exit 1
+    fi
+}
+
+preflight_update() {
+    echo -e "${BLUE}[Preflight] Checking update prerequisites...${NC}"
+    require_cmd pkg
+    require_cmd proot-distro
+    require_cmd cloudflared
+
+    if [ ! -f "./server.sh" ]; then
+        echo -e "${RED}❌ server.sh not found. Run install.sh first.${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}[Preflight] OK${NC}"
+}
+
 # COLORS
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -10,6 +34,8 @@ NC='\033[0m' # No Color
 
 clear
 echo -e "${BLUE}===============================================${NC}"
+
+preflight_update
 echo -e "${BLUE}      SYSTEM UPDATE (TERMUX + UBUNTU)          ${NC}"
 echo -e "${BLUE}===============================================${NC}"
 
@@ -47,4 +73,8 @@ if [ -f "./server.sh" ]; then
 else
     echo -e "${RED}❌ Critical! server.sh file is missing.${NC}"
     echo "Please run install.sh again."
+fi
+
+if [ -f "$SCRIPT_DIR/health-check.sh" ]; then
+    bash "$SCRIPT_DIR/health-check.sh"
 fi

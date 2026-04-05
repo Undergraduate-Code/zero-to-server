@@ -2,12 +2,48 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+require_cmd() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "❌ Missing required command: $cmd"
+        exit 1
+    fi
+}
+
+preflight_install() {
+    echo "[Preflight] Running strict checks..."
+    require_cmd apt
+    require_cmd systemctl
+    require_cmd python3
+
+    if ! getent hosts github.com >/dev/null 2>&1; then
+        echo "❌ DNS/internet check failed (github.com not reachable)."
+        exit 1
+    fi
+
+    if ss -ltn | awk '{print $4}' | grep -qE '(:|\.)6080$'; then
+        echo "❌ Port 6080 is already in use. Stop conflicting service first."
+        exit 1
+    fi
+
+    if ! ss -ltn | awk '{print $4}' | grep -qE '(:|\.)5900$'; then
+        echo "❌ Port 5900 is not listening. Start your VNC server first."
+        exit 1
+    fi
+
+    echo "[Preflight] OK"
+}
+
 # Creator : BrotherZhafif
 # Maintainer :
 
 # Created : 9 February 2025
 
 if [ "$EUID" -ne 0 ]; then echo "❌ Run as ROOT!"; exit; fi
+
+preflight_install
 
 echo "[1/5] Update & Install Tools..."
 apt update && apt upgrade -y
@@ -102,5 +138,9 @@ echo "[5/5] Starting Services..."
 systemctl daemon-reload
 systemctl enable myserver-tunnel myserver-display
 systemctl start myserver-tunnel myserver-display
+
+if [ -f "$SCRIPT_DIR/health-check.sh" ]; then
+    bash "$SCRIPT_DIR/health-check.sh"
+fi
 
 echo "✅ DONE! Server automatically starts on boot."
