@@ -1,4 +1,7 @@
 # 1. ADMIN CHECK
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "⚠️  MUST RUN AS ADMINISTRATOR!" -ForegroundColor Red; Start-Sleep 3; Exit
 }

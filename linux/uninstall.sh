@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 if [ "$EUID" -ne 0 ]; then echo "❌ Run as ROOT!"; exit; fi
 
 echo -e "\033[1;31m"
@@ -23,6 +25,11 @@ systemctl reset-failed
 echo "--- 3. REMOVING SERVER FILES ---"
 rm -rf /opt/serverlab
 rm -rf /etc/cloudflared
+rm -rf /etc/serverlab
+
+if id -u serverlab >/dev/null 2>&1; then
+    userdel serverlab || true
+fi
 
 echo "--- 4. UNINSTALL CLOUDFLARED (OPTIONAL) ---"
 read -p "Uninstall cloudflared package? (y/n): " rm_pkg

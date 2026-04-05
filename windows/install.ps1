@@ -3,6 +3,9 @@
 
 # Created : 8 February 2025
 
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
 # 1. CHECK ADMIN
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "⚠️  MUST RUN AS ADMINISTRATOR!" -ForegroundColor Red; Start-Sleep 3; Exit
@@ -37,6 +40,7 @@ choco install git python tightvnc cloudflared -y --no-progress
 Write-Host "[4/7] Creating Ubuntu Setup Script..." -ForegroundColor Green
 $Path = "C:\ServerLab"
 New-Item -ItemType Directory -Force -Path $Path | Out-Null
+New-Item -ItemType Directory -Force -Path "$Path\secrets" | Out-Null
 Set-Location $Path
 
 # This script will be run manually by the user after restart
@@ -44,9 +48,23 @@ $WSLScript = @"
 echo '--- UBUNTU SSH SETUP ---'
 sudo apt update && sudo apt install openssh-server -y
 sudo mkdir -p /run/sshd
-sudo sed -i 's/#Port 22/Port 2022/' /etc/ssh/sshd_config
-sudo sed -i 's/Port 22/Port 2022/' /etc/ssh/sshd_config
+if sudo grep -qE '^\s*#?\s*Port\s+' /etc/ssh/sshd_config; then
+    sudo sed -i 's/^\s*#\?\s*Port\s\+.*/Port 2022/' /etc/ssh/sshd_config
+else
+    echo 'Port 2022' | sudo tee -a /etc/ssh/sshd_config >/dev/null
+fi
+if sudo grep -qE '^\s*#?\s*PasswordAuthentication\s+' /etc/ssh/sshd_config; then
+    sudo sed -i 's/^\s*#\?\s*PasswordAuthentication\s\+.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+else
+    echo 'PasswordAuthentication no' | sudo tee -a /etc/ssh/sshd_config >/dev/null
+fi
+if sudo grep -qE '^\s*#?\s*PermitRootLogin\s+' /etc/ssh/sshd_config; then
+    sudo sed -i 's/^\s*#\?\s*PermitRootLogin\s\+.*/PermitRootLogin no/' /etc/ssh/sshd_config
+else
+    echo 'PermitRootLogin no' | sudo tee -a /etc/ssh/sshd_config >/dev/null
+fi
 sudo ssh-keygen -A
+sudo service ssh restart || true
 echo '✅ Ubuntu SSH Ready on Port 2022'
 "@
 Set-Content -Path "$Path\setup_wsl_internal.sh" -Value $WSLScript
@@ -71,25 +89,43 @@ Set-Content -Path "$Path\noVNC\index.html" -Value $HTML
 
 # 7. LAUNCHER (BAT FILE)
 Write-Host "[6/7] Finalizing..." -ForegroundColor Green
-$Token = Read-Host "Paste Cloudflare Tunnel Token"
+$SecureToken = Read-Host "Paste Cloudflare Tunnel Token" -AsSecureString
+$EncryptedToken = ConvertFrom-SecureString $SecureToken
+Set-Content -Path "$Path\secrets\cloudflared.token.enc" -Value $EncryptedToken
 
 # FIX: Use 127.0.0.1 to avoid Loopback Restriction
+$LauncherPs1 = @"
+Set-StrictMode -Version Latest
+
+
+$TokenFile = 'C:\ServerLab\secrets\cloudflared.token.enc'
+if (!(Test-Path $TokenFile)) {
+    Write-Host 'Missing token file. Run install.ps1 again.' -ForegroundColor Red
+    exit 1
+}
+
+$SecureToken = Get-Content -Path $TokenFile | ConvertTo-SecureString
+$TokenPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureToken)
+$Token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($TokenPtr)
+
+Write-Host '==========================================' -ForegroundColor Cyan
+Write-Host '   STARTING ALL SERVICES...' -ForegroundColor Cyan
+Write-Host '==========================================' -ForegroundColor Cyan
+
+Write-Host '[+] Starting Cloudflare...'
+Start-Process -WindowStyle Hidden -FilePath 'cloudflared' -ArgumentList @('tunnel', 'run', '--token', $Token)
+
+Write-Host '[+] Starting Web Display...'
+Start-Process -WindowStyle Hidden -FilePath 'python' -ArgumentList @('-m', 'websockify', '--web', 'C:\ServerLab\noVNC', '6080', '127.0.0.1:5900')
+
+Write-Host '[+] Starting Ubuntu SSH...'
+wsl -d Ubuntu -- sudo /usr/sbin/sshd -D
+"@
+Set-Content -Path "$Path\start_server.ps1" -Value $LauncherPs1
+
 $Bat = @"
 @echo off
-title SERVER CONTROLLER
-color 0B
-cls
-echo ==========================================
-echo    STARTING ALL SERVICES...
-echo ==========================================
-echo [+] Starting Cloudflare...
-start /B cloudflared tunnel run --token $Token
-
-echo [+] Starting Web Display...
-start /B websockify --web C:\ServerLab\noVNC 6080 127.0.0.1:5900
-
-echo [+] Starting Ubuntu SSH...
-wsl -d Ubuntu -- sudo /usr/sbin/sshd -D
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\ServerLab\start_server.ps1
 pause
 "@
 Set-Content -Path "$Path\start_server.bat" -Value $Bat
@@ -97,11 +133,21 @@ Set-Content -Path "$Path\start_server.bat" -Value $Bat
 # 8. LOCAL USER OPTION (MICROSOFT ACCOUNT SOLUTION)
 Write-Host ""
 Write-Host "⚠️  ADVICE: Microsoft Accounts often FAIL SSH login." -ForegroundColor Yellow
-$CreateUser = Read-Host "Create local user 'dev' (Pass: 123) specifically for SSH? (Y/N)"
+$CreateUser = Read-Host "Create dedicated local SSH user now? (Y/N)"
 if ($CreateUser -eq 'Y') {
-    net user dev 123 /add
-    net localgroup administrators dev /add
-    Write-Host "✅ User 'dev' created! Use this user for SSH." -ForegroundColor Green
+    $SshUser = Read-Host "Enter local username (example: devops)"
+    if ([string]::IsNullOrWhiteSpace($SshUser)) {
+        Write-Host "Skipped user creation: username was empty." -ForegroundColor Yellow
+    }
+    elseif (Get-LocalUser -Name $SshUser -ErrorAction SilentlyContinue) {
+        Write-Host "User '$SshUser' already exists. Skipping creation." -ForegroundColor Yellow
+    }
+    else {
+        $SshPassword = Read-Host "Enter strong password for '$SshUser'" -AsSecureString
+        New-LocalUser -Name $SshUser -Password $SshPassword -PasswordNeverExpires -AccountNeverExpires | Out-Null
+        Add-LocalGroupMember -Group "Users" -Member $SshUser -ErrorAction SilentlyContinue
+        Write-Host "✅ User '$SshUser' created. Use this user for SSH." -ForegroundColor Green
+    }
 }
 
 Write-Host ""
@@ -109,4 +155,4 @@ Write-Host "✅ INSTALLATION COMPLETE!" -ForegroundColor Cyan
 Write-Host "1. RESTART Laptop now."
 Write-Host "2. Open Folder C:\ServerLab."
 Write-Host "3. Right Click -> Open Terminal -> Type: wsl -d Ubuntu -- bash setup_wsl_internal.sh"
-Write-Host "4. Run start_server.bat"
+Write-Host "4. Run start_server.ps1 (or start_server.bat wrapper)"

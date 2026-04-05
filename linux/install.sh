@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Creator : BrotherZhafif
 # Maintainer :
 
@@ -9,7 +11,7 @@ if [ "$EUID" -ne 0 ]; then echo "❌ Run as ROOT!"; exit; fi
 
 echo "[1/5] Update & Install Tools..."
 apt update && apt upgrade -y
-apt install git wget curl python3 python3-pip python3-venv -y
+apt install git wget curl openssh-server python3 python3-pip python3-venv -y
 
 echo "[2/5] Installing Cloudflared..."
 if ! command -v cloudflared &> /dev/null; then
@@ -22,11 +24,14 @@ fi
 echo "[3/5] Setup noVNC & Venv..."
 mkdir -p /opt/serverlab
 cd /opt/serverlab
-python3 -m venv venv
+if [ ! -d venv ]; then
+    python3 -m venv venv
+fi
 source venv/bin/activate
 
 if [ ! -d "noVNC" ]; then git clone --depth 1 https://github.com/novnc/noVNC.git; fi
-pip install websockify
+pip install --upgrade pip
+pip install --upgrade websockify
 
 # Intro Page
 cat <<EOF > noVNC/index.html
@@ -38,7 +43,18 @@ h1{color:#58a6ff}a{background:#238636;color:white;padding:10px 20px;text-decorat
 EOF
 
 echo ""
-read -p "Paste Cloudflare Token: " TOKEN
+read -r -s -p "Paste Cloudflare Token: " TOKEN
+echo ""
+
+install -d -m 750 /etc/serverlab
+printf 'CLOUDFLARE_TOKEN=%q\n' "$TOKEN" > /etc/serverlab/serverlab.env
+
+if ! id -u serverlab >/dev/null 2>&1; then
+    useradd --system --home /opt/serverlab --shell /usr/sbin/nologin serverlab
+fi
+chown -R serverlab:serverlab /opt/serverlab
+chown root:serverlab /etc/serverlab/serverlab.env
+chmod 640 /etc/serverlab/serverlab.env
 
 echo "[4/5] Setup Systemd Service (Auto-Start)..."
 # Service Tunnel
@@ -47,9 +63,17 @@ cat <<EOF > /etc/systemd/system/myserver-tunnel.service
 Description=Cloudflare Tunnel
 After=network.target
 [Service]
-ExecStart=/usr/bin/cloudflared tunnel run --token $TOKEN
+EnvironmentFile=/etc/serverlab/serverlab.env
+ExecStart=/bin/sh -c '/usr/bin/cloudflared tunnel run --token "$CLOUDFLARE_TOKEN"'
 Restart=always
-User=root
+RestartSec=3
+User=serverlab
+Group=serverlab
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/serverlab
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -62,7 +86,14 @@ After=network.target
 [Service]
 ExecStart=/opt/serverlab/venv/bin/python3 /opt/serverlab/venv/bin/websockify --web /opt/serverlab/noVNC 6080 localhost:5900
 Restart=always
-User=root
+RestartSec=3
+User=serverlab
+Group=serverlab
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/serverlab
 [Install]
 WantedBy=multi-user.target
 EOF

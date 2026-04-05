@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # COLORS
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -14,10 +16,10 @@ echo -e "${BLUE}===============================================${NC}"
 # 1. KILL ALL PROCESSES (Ensure smooth update)
 echo -e "${GREEN}[1/3] Stopping server temporarily...${NC}"
 termux-wake-lock
-pkill -9 cloudflared 2>/dev/null
-pkill -9 nginx 2>/dev/null
-pkill -9 sshd 2>/dev/null
-pkill -f "novnc_proxy" 2>/dev/null
+pkill cloudflared 2>/dev/null || true
+pkill nginx 2>/dev/null || true
+pkill sshd 2>/dev/null || true
+pkill -f "novnc_proxy" 2>/dev/null || true
 
 # 2. UPDATE TERMUX (HOST)
 echo -e "${GREEN}[2/3] Updating Termux System...${NC}"
@@ -37,7 +39,6 @@ fi
 echo -e "${BLUE}===============================================${NC}"
 echo -e "${BLUE}✅ UPDATE COMPLETE! Starting Server...${NC}"
 echo -e "${BLUE}===============================================${NC}"
-sleep 2
 
 # 4. CALL SERVER.SH
 if [ -f "./server.sh" ]; then

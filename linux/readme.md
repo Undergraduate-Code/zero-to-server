@@ -235,7 +235,7 @@ We create 2 "robots" to guard the server:
 | ---------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **Black / Blank Screen**     | Wayland Protocol      | Logout of Ubuntu, click the gear ⚙️ in the bottom right corner, select **"Ubuntu on Xorg"**, then login again. |
 | **"Failed to bind to port"** | Port 5900/6080 in use | Check `sudo netstat -tulpn`. Kill other services using those ports.                                            |
-| **SSH Permission Denied**    | Root login disabled   | Edit `/etc/ssh/sshd_config`, set `PermitRootLogin yes`, then `sudo service ssh restart`.                       |
+| **SSH Permission Denied**    | Username/key/password mismatch | Use your regular Linux user, verify `~/.ssh/authorized_keys` (if using key auth), then restart SSH service with `sudo service ssh restart`. |
 | **Cloudflare Error**         | Wrong / Expired Token | Uninstall (`sudo ./uninstall.sh`) then Reinstall with a new token.                                             |
 
 ---

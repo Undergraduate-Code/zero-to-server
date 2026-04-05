@@ -61,7 +61,7 @@ We use Cloudflare so we don't need to open router ports.
 | --------- | ---------------- | ------------ | ---------------- | ---------------------------- |
 | `display` | `yourdomain.com` | **HTTP**     | `localhost:8080` | Phone Screen Access (Web)    |
 | `server`  | `yourdomain.com` | **SSH**      | `localhost:2022` | Ubuntu Terminal Access (SSH) |
-| `termux`  | `yourdomain.com` | **SSH**      | `localhost:8020` | Termux Terminal Access (SSH) |
+| `termux`  | `yourdomain.com` | **SSH**      | `localhost:8022` | Termux Terminal Access (SSH) |
 
 **IMPORTANT:** The Ubuntu SSH Port is **2022**, not 8022. Ensure the Cloudflare configuration points to `localhost:2022`.
 
@@ -117,7 +117,7 @@ This script is a **COMPLETE INITIAL SETUP** that only needs to be run once. The 
 - Download & install Ubuntu (if not present)
 - Install inside Ubuntu: `openssh-server`, `git`, `curl`, `nano`, `net-tools`
 - Configure Ubuntu SSH on **Port 2022**
-- Create `/root/project` folder for development
+- Create non-root SSH user and `/home/<user>/project` folder for development
 
 4. **[4/7] Input Ubuntu Password** for VS Code Remote SSH login (MANDATORY!)
 5. **[5/7] Download noVNC** and create custom landing page with your branding:
@@ -135,7 +135,7 @@ This script is a **COMPLETE INITIAL SETUP** that only needs to be run once. The 
 
 ### Inputs required during installation
 
-- **Ubuntu Password**: for VS Code Remote SSH login (VERY IMPORTANT!)
+- **Ubuntu Username + Password**: dedicated non-root account for VS Code Remote SSH login (VERY IMPORTANT!)
 - **Web Name**: title of the front page (e.g., `Raja's Lab`)
 - **Owner Name**: text on the intro page (e.g., `Raja Zhafif`)
 - **Cloudflare Token**: tunnel code `eyJhIjoi...` from Cloudflare Zero Trust Dashboard
@@ -221,7 +221,7 @@ nohup cloudflared tunnel run --token $TOKEN > tunnel.log 2>&1 &
 
 ```
 
-- The Token you input during installation is saved inside `server.sh`.
+- The token is saved in `~/.config/zero-to-server/cloudflared.token` with restricted permission.
 - Cloudflare tunnel will expose:
 - `display.yourdomain.com` → `localhost:8080` (Nginx + noVNC)
 - `server.yourdomain.com:2022` → `localhost:2022` (Ubuntu SSH)
@@ -234,7 +234,7 @@ nohup cloudflared tunnel run --token $TOKEN > tunnel.log 2>&1 &
 ✅ SERVER READY! Access at:
 🖥️  Phone Screen:   https://display.brotherzhafif.my.id
 📟 VS Code:    ssh server.brotherzhafif.my.id
-    (User: root | Real Port: 2022)
+    (User: your_ubuntu_user | Real Port: 2022)
 
 ```
 
@@ -256,7 +256,7 @@ nohup cloudflared tunnel run --token $TOKEN > tunnel.log 2>&1 &
         ↓
 [D] You can access:
     ├─ https://display.yourdomain.com → Phone Screen GUI
-    └─ ssh root@server.yourdomain.com → Ubuntu Terminal (VS Code)
+    └─ ssh your_ubuntu_user@server.yourdomain.com → Ubuntu Terminal (VS Code)
 
 ```
 
@@ -343,7 +343,7 @@ To access the Ubuntu environment via VS Code Remote SSH:
 ```text
 Host vivo-ubuntu
     HostName server.yourdomain.com
-    User root
+    User your_ubuntu_user
     Port 22
     ProxyCommand cloudflared access ssh --hostname %h
 
@@ -356,9 +356,9 @@ Host vivo-ubuntu
 
 **Notes:**
 
-- User login: `root` (Ubuntu proot default)
+- User login: dedicated non-root user created during install
 - Ubuntu SSH Port: **2022** (inside tunnel), but externally use port **22**
-- Project folder: `/root/project`
+- Project folder: `/home/<your_ubuntu_user>/project`
 
 ## 📝 Code Explanation (Under the Hood)
 

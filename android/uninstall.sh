@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 echo -e "\033[1;31m"
 echo "⚠️  WARNING: THIS SCRIPT WILL DELETE ALL SERVER DATA!"
 echo "    - Ubuntu (Proot-Distro) will be removed."
@@ -27,6 +29,7 @@ rm -rf ~/server
 rm -rf ~/.cloudflared
 rm -rf ~/.ssh/known_hosts
 rm -rf ~/zero-to-server/android/server.sh
+rm -rf ~/.config/zero-to-server
 
 # Remove nginx config
 rm -rf $PREFIX/etc/nginx/nginx.conf
